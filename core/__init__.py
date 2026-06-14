@@ -1,11 +1,11 @@
 """
-CleanBot v2.0 — 核心引擎模块
+CleanBot v2.0 -- Core Engine Module
 """
 
 __version__ = "2.0.0"
 __author__ = "PHOENIX"
 
-# 延迟导入，避免循环依赖
+# Lazy imports to avoid circular dependencies
 def get_scanner():
     from .scanner import FileScanner
     return FileScanner
@@ -21,3 +21,11 @@ def get_monitor():
 def get_recommendation():
     from .ai.recommendation import RecommendationEngine
     return RecommendationEngine
+
+def get_analyzer():
+    from .analyzer.smart_analyzer import SmartAnalyzer
+    return SmartAnalyzer
+
+def get_dialog():
+    from .ai.dialog_system import DialogSystem
+    return DialogSystem

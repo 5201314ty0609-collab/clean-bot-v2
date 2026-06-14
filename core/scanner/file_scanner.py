@@ -32,6 +32,12 @@ class FileInfo:
     file_type: str = ""  # temp, cache, log, backup, etc.
     category: str = ""   # safe, ask, danger
     hash: str = ""
+    # Smart analyzer fields
+    risk_level: str = ""       # safe, low, medium, high, critical
+    risk_reason: str = ""      # Human-readable risk explanation
+    type_name: str = ""        # Human-readable file type name
+    impact: str = ""           # What happens if deleted
+    clean_score: int = 0       # 0-100, higher = more recommended to clean
 
 
 @dataclass
@@ -103,6 +109,8 @@ class FileScanner:
         self.scanned_files: List[FileInfo] = []
         self._excluded_paths: Set[str] = set()
         self._hash_cache: Dict[str, str] = {}
+        # Smart analyzer (lazy init)
+        self._analyzer = None
 
     def scan(self, progress_callback=None) -> ScanResult:
         """扫描文件系统"""
@@ -112,6 +120,13 @@ class FileScanner:
         self.scan_result = ScanResult()
         self.scanned_files = []
         self._hash_cache.clear()
+
+        # Initialize smart analyzer
+        try:
+            from core.analyzer.smart_analyzer import SmartAnalyzer
+            self._analyzer = SmartAnalyzer()
+        except ImportError:
+            self._analyzer = None
 
         # 预处理排除路径
         self._prepare_excluded_paths()
@@ -227,7 +242,37 @@ class FileScanner:
             return None
 
     def _categorize_file(self, file_info: FileInfo):
-        """分类文件"""
+        """分类文件 (uses SmartAnalyzer when available)"""
+        # Try smart analyzer first
+        if self._analyzer is not None:
+            analysis = self._analyzer.analyze_file(
+                path=file_info.path,
+                size=file_info.size,
+                extension=file_info.extension,
+                accessed=file_info.accessed,
+                modified=file_info.modified,
+                is_system=file_info.is_system,
+                is_hidden=file_info.is_hidden,
+            )
+            file_info.file_type = analysis.category
+            file_info.risk_level = analysis.risk.value
+            file_info.risk_reason = analysis.risk_reason
+            file_info.type_name = self._analyzer.get_type_name(file_info.extension)
+            file_info.impact = analysis.impact
+            file_info.clean_score = analysis.score
+
+            # Map analyzer output to legacy category
+            if analysis.can_delete and analysis.risk.value in ("safe", "low"):
+                file_info.category = "safe"
+            elif analysis.can_delete:
+                file_info.category = "ask"
+            elif analysis.risk.value in ("high", "critical"):
+                file_info.category = "skip"
+            else:
+                file_info.category = "ask"
+            return
+
+        # Fallback: legacy classification
         path_lower = file_info.path.lower()
         ext = file_info.extension
 

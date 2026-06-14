@@ -119,9 +119,9 @@ class CleanBotApp:
 
     def _on_robot_double_clicked(self):
         """机器人双击事件"""
-        # 打开主界面
+        # 打开主界面，传递 robot 引用以实现任务联动
         from ui.main_window import MainWindow
-        self.main_window = MainWindow()
+        self.main_window = MainWindow(robot=self.robot)
         self.main_window.show()
 
     def _on_character_changed(self, character_id: str):

@@ -30,6 +30,9 @@ from core.cleaner.file_cleaner import FileCleaner
 # 导入自定义控件
 from ui.dashboard import DashboardView, CircularProgress, StatCard, RecommendationsWidget
 
+# 导入对话系统
+from core.ai.dialog_system import DialogSystem, DialogContext, Mood
+
 
 class ScanThread(QThread):
     """扫描线程"""
@@ -122,7 +125,7 @@ class RecommendationThread(QThread):
 class MainWindow(QMainWindow):
     """主窗口"""
 
-    def __init__(self):
+    def __init__(self, robot=None):
         super().__init__()
 
         self.setWindowTitle("CleanBot v2.0 — 智能桌面清理机器人")
@@ -132,6 +135,12 @@ class MainWindow(QMainWindow):
         self.scan_result = None
         self.files_to_clean = []
 
+        # Robot reference (optional, for task integration)
+        self.robot = robot
+
+        # Dialog system
+        self.dialog = DialogSystem()
+
         # 初始化 UI
         self._init_ui()
 
@@ -140,6 +149,12 @@ class MainWindow(QMainWindow):
 
         # 初始化定时器
         self._init_timers()
+
+        # Show greeting if robot is available
+        if self.robot:
+            context = DialogContext()
+            greeting = self.dialog.greet(context)
+            self.robot.show_speech(greeting)
 
     def _init_ui(self):
         """初始化 UI"""
@@ -183,8 +198,10 @@ class MainWindow(QMainWindow):
         toolbar.setFrameStyle(QFrame.Shape.StyledPanel)
         toolbar.setStyleSheet("""
             QFrame {
-                background-color: #2196F3;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 #1565C0, stop:1 #1976D2);
                 border: none;
+                border-bottom: 1px solid #0D47A1;
             }
         """)
 
@@ -251,9 +268,9 @@ class MainWindow(QMainWindow):
         nav.setFixedWidth(200)
         nav.setStyleSheet("""
             QFrame {
-                background-color: #F5F5F5;
+                background-color: #FFFFFF;
                 border: none;
-                border-right: 1px solid #E0E0E0;
+                border-right: 1px solid #DEE2E6;
             }
         """)
 
@@ -277,18 +294,20 @@ class MainWindow(QMainWindow):
             button.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
-                    color: #333333;
+                    color: #495057;
                     border: none;
-                    border-radius: 5px;
-                    padding: 12px 15px;
+                    border-radius: 8px;
+                    padding: 12px 16px;
                     text-align: left;
+                    font-size: 13px;
                 }
                 QPushButton:hover {
-                    background-color: #E0E0E0;
+                    background-color: #F1F3F5;
                 }
                 QPushButton:checked {
-                    background-color: #2196F3;
-                    color: white;
+                    background-color: #E3F2FD;
+                    color: #1565C0;
+                    font-weight: bold;
                 }
             """)
             button.setCheckable(True)
@@ -471,10 +490,35 @@ class MainWindow(QMainWindow):
         stats_layout.addStretch()
         layout.addLayout(stats_layout)
 
+        # 风险分布标签
+        risk_layout = QHBoxLayout()
+        self.risk_safe_label = QLabel("Safe: 0")
+        self.risk_safe_label.setFont(QFont("Microsoft YaHei", 10))
+        self.risk_safe_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        risk_layout.addWidget(self.risk_safe_label)
+
+        self.risk_low_label = QLabel("Low: 0")
+        self.risk_low_label.setFont(QFont("Microsoft YaHei", 10))
+        self.risk_low_label.setStyleSheet("color: #8BC34A; font-weight: bold;")
+        risk_layout.addWidget(self.risk_low_label)
+
+        self.risk_medium_label = QLabel("Medium: 0")
+        self.risk_medium_label.setFont(QFont("Microsoft YaHei", 10))
+        self.risk_medium_label.setStyleSheet("color: #FFC107; font-weight: bold;")
+        risk_layout.addWidget(self.risk_medium_label)
+
+        self.risk_high_label = QLabel("High: 0")
+        self.risk_high_label.setFont(QFont("Microsoft YaHei", 10))
+        self.risk_high_label.setStyleSheet("color: #FF5722; font-weight: bold;")
+        risk_layout.addWidget(self.risk_high_label)
+
+        risk_layout.addStretch()
+        layout.addLayout(risk_layout)
+
         # 文件表格
         self.files_table = QTableWidget()
-        self.files_table.setColumnCount(5)
-        self.files_table.setHorizontalHeaderLabels(["选择", "文件路径", "大小", "类型", "修改时间"])
+        self.files_table.setColumnCount(7)
+        self.files_table.setHorizontalHeaderLabels(["选择", "文件路径", "大小", "类型名称", "风险等级", "删除影响", "修改时间"])
         self.files_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.files_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.files_table.setAlternatingRowColors(True)
@@ -732,43 +776,73 @@ class MainWindow(QMainWindow):
         """初始化样式"""
         self.setStyleSheet("""
             QMainWindow {
-                background-color: #FAFAFA;
+                background-color: #F8F9FA;
             }
             QGroupBox {
                 font-weight: bold;
-                border: 1px solid #E0E0E0;
-                border-radius: 5px;
-                margin-top: 10px;
-                padding-top: 15px;
+                border: 1px solid #DEE2E6;
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 16px;
             }
             QGroupBox::title {
                 subcontrol-origin: margin;
-                left: 10px;
-                padding: 0 5px;
+                left: 12px;
+                padding: 0 6px;
             }
             QTableWidget {
-                border: 1px solid #E0E0E0;
-                border-radius: 5px;
+                border: 1px solid #DEE2E6;
+                border-radius: 8px;
                 background-color: white;
+                gridline-color: #F1F3F5;
             }
             QTableWidget::item {
-                padding: 5px;
+                padding: 6px;
+            }
+            QTableWidget::item:selected {
+                background-color: #E3F2FD;
+                color: #1565C0;
             }
             QHeaderView::section {
-                background-color: #F5F5F5;
+                background-color: #F1F3F5;
                 border: none;
-                border-bottom: 1px solid #E0E0E0;
-                padding: 8px;
+                border-bottom: 2px solid #DEE2E6;
+                border-right: 1px solid #DEE2E6;
+                padding: 8px 10px;
                 font-weight: bold;
+                color: #495057;
             }
             QProgressBar {
-                border: 1px solid #E0E0E0;
-                border-radius: 5px;
+                border: 1px solid #DEE2E6;
+                border-radius: 6px;
                 text-align: center;
+                background-color: #E9ECEF;
             }
             QProgressBar::chunk {
                 background-color: #2196F3;
                 border-radius: 5px;
+            }
+            QPushButton {
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 500;
+            }
+            QScrollBar:vertical {
+                border: none;
+                background: #F1F3F5;
+                width: 8px;
+                border-radius: 4px;
+            }
+            QScrollBar::handle:vertical {
+                background: #CED4DA;
+                border-radius: 4px;
+                min-height: 30px;
+            }
+            QScrollBar::handle:vertical:hover {
+                background: #ADB5BD;
+            }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+                height: 0;
             }
         """)
 
@@ -799,6 +873,12 @@ class MainWindow(QMainWindow):
 
         # 更新状态
         self.statusBar().showMessage("正在扫描...")
+
+        # Robot: show working state
+        if self.robot:
+            msg, mood = self.dialog.on_scan_start(DialogContext())
+            self.robot.set_state(mood.value)
+            self.robot.show_speech(msg)
 
         # 创建扫描线程
         from core.utils import get_system_drive
@@ -831,6 +911,22 @@ class MainWindow(QMainWindow):
         # 更新状态
         self.statusBar().showMessage("扫描完成")
 
+        # Robot: show scan result
+        if self.robot:
+            safe_files = (
+                self.scan_result.temp_files
+                + self.scan_result.cache_files
+                + self.scan_result.log_files
+            )
+            safe_size = sum(f.size for f in safe_files)
+            ctx = DialogContext(
+                files_scanned=len(safe_files),
+                space_freed=safe_size,
+            )
+            msg, mood = self.dialog.on_scan_complete(ctx)
+            self.robot.set_state(mood.value)
+            self.robot.show_speech(msg, duration=5000)
+
     def _update_scan_stats(self):
         """更新扫描统计信息"""
         if not self.scan_result:
@@ -846,6 +942,17 @@ class MainWindow(QMainWindow):
         self.safe_files_label.setText(f"可清理: {len(safe_files):,} 个")
         self.safe_size_label.setText(f"可释放: {format_size(safe_size)}")
 
+        # Update risk distribution
+        risk_counts = {"safe": 0, "low": 0, "medium": 0, "high": 0}
+        for f in safe_files:
+            risk = getattr(f, "risk_level", "safe")
+            if risk in risk_counts:
+                risk_counts[risk] += 1
+        self.risk_safe_label.setText(f"Safe: {risk_counts['safe']}")
+        self.risk_low_label.setText(f"Low: {risk_counts['low']}")
+        self.risk_medium_label.setText(f"Medium: {risk_counts['medium']}")
+        self.risk_high_label.setText(f"High: {risk_counts['high']}")
+
     def _update_files_table(self):
         """更新文件表格"""
         if not self.scan_result:
@@ -854,6 +961,15 @@ class MainWindow(QMainWindow):
         files = self.scan_result.temp_files + self.scan_result.cache_files + self.scan_result.log_files
 
         self.files_table.setRowCount(len(files))
+
+        # Risk level colors
+        risk_colors = {
+            "safe": QColor("#4CAF50"),
+            "low": QColor("#8BC34A"),
+            "medium": QColor("#FFC107"),
+            "high": QColor("#FF5722"),
+            "critical": QColor("#F44336"),
+        }
 
         for i, file_info in enumerate(files):
             # 选择框
@@ -873,17 +989,41 @@ class MainWindow(QMainWindow):
             size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
             self.files_table.setItem(i, 2, size_item)
 
-            # 类型
-            type_item = QTableWidgetItem(file_info.file_type)
+            # 类型名称
+            type_name = getattr(file_info, "type_name", "") or file_info.file_type
+            type_item = QTableWidgetItem(type_name)
             type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
             self.files_table.setItem(i, 3, type_item)
+
+            # 风险等级 (color-coded)
+            risk = getattr(file_info, "risk_level", "safe")
+            risk_label = {
+                "safe": "Safe",
+                "low": "Low",
+                "medium": "Medium",
+                "high": "High",
+                "critical": "Critical",
+            }.get(risk, risk)
+            risk_item = QTableWidgetItem(risk_label)
+            risk_item.setFlags(risk_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            color = risk_colors.get(risk)
+            if color:
+                risk_item.setForeground(color)
+                risk_item.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+            self.files_table.setItem(i, 4, risk_item)
+
+            # 删除影响
+            impact = getattr(file_info, "impact", "")
+            impact_item = QTableWidgetItem(impact)
+            impact_item.setFlags(impact_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.files_table.setItem(i, 5, impact_item)
 
             # 修改时间
             from datetime import datetime
             mtime = datetime.fromtimestamp(file_info.modified)
             time_item = QTableWidgetItem(mtime.strftime("%Y-%m-%d %H:%M"))
             time_item.setFlags(time_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.files_table.setItem(i, 4, time_item)
+            self.files_table.setItem(i, 6, time_item)
 
         self._update_selected_count()
 
@@ -962,6 +1102,12 @@ class MainWindow(QMainWindow):
         # 更新状态
         self.statusBar().showMessage("正在清理...")
 
+        # Robot: show cleaning state
+        if self.robot:
+            msg, mood = self.dialog.on_clean_start(DialogContext())
+            self.robot.set_state(mood.value)
+            self.robot.show_speech(msg)
+
         # 创建清理线程
         self.clean_thread = CleanThread(files, use_trash=True)
         self.clean_thread.progress.connect(self._on_clean_progress)
@@ -991,6 +1137,14 @@ class MainWindow(QMainWindow):
         )
 
         self.statusBar().showMessage("清理完成")
+
+        # Robot: show cleanup result
+        if self.robot:
+            ctx = DialogContext(space_freed=result.freed_size)
+            msg, mood = self.dialog.on_clean_complete(ctx)
+            self.robot.set_state(mood.value)
+            self.robot.show_speech(msg, duration=5000)
+
         self._start_scan()
 
     def _start_diagnosis(self):
@@ -1014,6 +1168,16 @@ class MainWindow(QMainWindow):
             # 严重程度
             severity_item = QTableWidgetItem(problem.severity.value.upper())
             severity_item.setFlags(severity_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            # Color-code severity
+            severity_colors = {
+                "CRITICAL": QColor("#F44336"),
+                "HIGH": QColor("#FF5722"),
+                "MEDIUM": QColor("#FFC107"),
+                "LOW": QColor("#4CAF50"),
+            }
+            color = severity_colors.get(problem.severity.value.upper())
+            if color:
+                severity_item.setForeground(color)
             self.problems_table.setItem(i, 0, severity_item)
 
             # 问题标题
@@ -1032,6 +1196,16 @@ class MainWindow(QMainWindow):
             self.problems_table.setItem(i, 3, solution_item)
 
         self.statusBar().showMessage(f"诊断完成 - 健康分数: {report.health_score}")
+
+        # Robot: show diagnosis result
+        if self.robot:
+            ctx = DialogContext(
+                health_score=report.health_score,
+                problem_count=len(report.problems),
+            )
+            msg, mood = self.dialog.on_diagnosis(ctx)
+            self.robot.set_state(mood.value)
+            self.robot.show_speech(msg, duration=6000)
 
     def _refresh_recommendations(self):
         """刷新推荐 - 使用后台线程"""
@@ -1084,6 +1258,14 @@ class MainWindow(QMainWindow):
                 files.append(path)
 
         return files
+
+    def set_robot(self, robot):
+        """Set the robot reference for task integration."""
+        self.robot = robot
+        if robot:
+            context = DialogContext()
+            greeting = self.dialog.greet(context)
+            robot.show_speech(greeting)
 
 
 def main():
