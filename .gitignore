@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+.env
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# PyInstaller
+*.spec
+*.exe
+*.dll
+*.dylib
+
+# NSIS
+installer/
+
+# Logs
+*.log
+logs/
+
+# User Data
+%USERPROFILE%/CleanBot/
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Distribution
+*.tar.gz
+*.whl
+*.zip

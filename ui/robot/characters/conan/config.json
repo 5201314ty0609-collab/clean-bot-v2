@@ -1,0 +1,78 @@
+{
+  "id": "conan",
+  "name": "柯南",
+  "description": "名侦探柯南 - 桌面清理机器人",
+  "size": {
+    "width": 200,
+    "height": 200
+  },
+  "colors": {
+    "primary": "#2196F3",
+    "secondary": "#FF6B6B",
+    "accent": "#4CAF50",
+    "background": "#FFFFFF"
+  },
+  "expressions": {
+    "idle": "微笑、眨眼",
+    "thinking": "托腮、思考",
+    "working": "专注、流汗",
+    "happy": "开心、跳跃",
+    "sad": "难过、低头",
+    "surprised": "惊讶、瞪大眼睛",
+    "angry": "生气、皱眉",
+    "confused": "困惑、歪头",
+    "proud": "得意、微笑",
+    "shy": "害羞、脸红",
+    "sleepy": "困倦、打哈欠",
+    "excited": "兴奋、眼睛发光"
+  },
+  "animations": {
+    "blink": "眨眼",
+    "look_around": "左右看",
+    "stretch": "伸懒腰",
+    "yawn": "打哈欠",
+    "wave": "挥手",
+    "bounce": "跳跃",
+    "walk": "行走",
+    "run": "跑步"
+  },
+  "images": {
+    "idle": "idle.png",
+    "happy": "happy.png",
+    "thinking": "thinking.png",
+    "working": "working.png",
+    "sad": "sad.png",
+    "surprised": "surprised.png",
+    "angry": "angry.png",
+    "confused": "confused.png",
+    "proud": "proud.png",
+    "shy": "shy.png",
+    "sleepy": "sleepy.png",
+    "excited": "excited.png",
+    "blink_1": "blink_1.png",
+    "blink_2": "blink_2.png",
+    "look_left": "look_left.png",
+    "look_right": "look_right.png",
+    "look_center": "look_center.png",
+    "wave_1": "wave_1.png",
+    "wave_2": "wave_2.png",
+    "bounce_1": "bounce_1.png",
+    "bounce_2": "bounce_2.png",
+    "bounce_3": "bounce_3.png",
+    "walk_1": "walk_1.png",
+    "walk_2": "walk_2.png",
+    "walk_3": "walk_3.png",
+    "walk_4": "walk_4.png",
+    "run_1": "run_1.png",
+    "run_2": "run_2.png",
+    "run_3": "run_3.png",
+    "run_4": "run_4.png"
+  },
+  "sounds": {
+    "greeting": "greeting.mp3",
+    "working": "working.mp3",
+    "complete": "complete.mp3",
+    "error": "error.mp3",
+    "click": "click.mp3"
+  }
+}

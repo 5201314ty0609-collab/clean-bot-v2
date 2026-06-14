@@ -1,0 +1,28 @@
+# CleanBot v2.0 依赖
+
+# GUI
+PyQt6>=6.5.0
+pyqtgraph>=0.13.0
+
+# 系统监控
+psutil>=5.9.0
+pywin32>=306
+
+# 文件操作
+send2trash>=1.8.0
+
+# 数据库
+sqlalchemy>=2.0.0
+
+# 图表
+matplotlib>=3.7.0
+
+# 网络
+requests>=2.31.0
+
+# 工具
+rich>=13.0.0
+click>=8.1.0
+
+# 打包（可选）
+# pyinstaller>=6.0.0
