@@ -1,24 +1,17 @@
-# CleanBot v2.0 — 智能桌面清理机器人 🤖
+# CleanBot v2.0 — 智能桌面清理机器人
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 [![国内可用](https://img.shields.io/badge/国内可用-无需代理-green.svg)](MIRROR_CN.md)
 
-> 一个部署在 Windows 上的**智能系统优化助手**，具备可爱的桌面机器人形象、智能诊断、实时监控、多元化清理等功能。
+> 一个部署在 Windows 上的**智能系统优化助手**，支持智能诊断、实时监控、多元化清理等功能。
 
 **🇨🇳 国内用户请注意：本项目支持国内镜像源，无需代理即可安装使用！** [查看国内镜像配置指南](MIRROR_CN.md)
 
 ---
 
 ## ✨ 核心特性
-
-### 🤖 可爱的桌面机器人
-- **卡通柯南形象**：可爱的卡通形象，支持动画和表情
-- **丰富的交互**：点击、拖拽、右键菜单、对话气泡
-- **动态表情**：根据状态变化表情（开心、思考、工作等）
-- **随机行为**：眨眼、左右看、伸懒腰、打哈欠等
-- **形象切换**：支持多种角色，可导入自定义形象
 
 ### 🔍 智能系统诊断
 - **系统健康检查**：系统文件完整性、Windows 更新、还原点
@@ -36,6 +29,7 @@
 - **旧文件识别**：>30天未访问
 - **重复文件检测**：基于 SHA-256 哈希
 - **安全分类**：safe, ask, skip, danger
+- **智能分析**：50+ 文件类型识别，风险评估，删除影响说明
 
 ### 📊 实时监控
 - **磁盘使用监控**：实时显示 C 盘使用情况
@@ -66,11 +60,8 @@ cd clean-bot-v2
 # 3. 安装依赖（使用国内镜像，无需代理）
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# 4. 生成机器人图片
-python ui/robot/characters/conan/generate_images.py
-
-# 5. 启动程序
-python main_robot.py
+# 4. 启动程序
+python main.py
 ```
 
 **或者直接运行安装脚本（自动使用国内镜像）：**
@@ -80,68 +71,216 @@ python main_robot.py
 install.bat
 ```
 
-### 使用
+### 创建桌面快捷方式
 
 ```bash
-# 启动桌面机器人
-python main_robot.py
+# 运行快捷方式创建脚本
+create_shortcut.bat
+```
 
-# 启动主界面
+---
+
+## 🎮 使用方式
+
+### 启动程序
+
+```bash
+# 方式 1：双击桌面快捷方式（推荐）
+# 方式 2：双击 start.bat
+# 方式 3：命令行启动
 python main.py
+```
 
-# 命令行模式
+### 模式选择
+
+启动后会显示模式选择界面：
+
+```
+============================================================
+  CleanBot v2.0 — 智能桌面清理机器人
+============================================================
+
+请选择运行模式:
+
+  1. GUI 模式      - 图形界面（推荐）
+  2. CLI 模式      - 命令行界面
+  3. 系统诊断      - 检测系统问题
+  4. 文件扫描      - 扫描可清理文件
+  5. 磁盘监控      - 实时监控磁盘使用
+  6. 智能推荐      - 获取清理建议
+  7. 快速清理      - 一键清理安全文件
+  8. 退出
+
+请输入选项 (1-8):
+```
+
+### 命令行参数
+
+```bash
+# 直接启动 GUI
+python main.py --gui
+
+# 直接启动 CLI
 python main.py --cli
 
-# 系统诊断
+# 运行系统诊断
 python main.py --diagnosis
 
-# 扫描文件
+# 启动磁盘监控
+python main.py --monitor
+
+# 获取智能推荐
+python main.py --recommend
+
+# 扫描文件系统
 python main.py --scan
 
 # 清理文件
 python main.py --clean
 
-# 磁盘监控
-python main.py --monitor
+# 快速清理安全文件
+python main.py --quick
+```
 
-# 智能推荐
+---
+
+## 🔍 系统诊断
+
+```bash
+python main.py --diagnosis
+```
+
+输出示例：
+
+```
+系统健康分数: 85/100
+
+发现的问题:
+
+  1. 🟠 CPU 使用率过高
+     当前 CPU 使用率 85%，可能影响系统响应速度
+     解决方案: 检查并关闭占用 CPU 较高的程序
+
+  2. 🟡 磁盘 C: 使用率 85%
+     磁盘 C: 已使用 85%，剩余空间不足
+     解决方案: 清理磁盘空间或扩展磁盘容量
+
+推荐:
+  - 关闭占用 CPU 较高的程序
+  - 清理磁盘空间
+```
+
+---
+
+## 🧹 文件清理
+
+### 扫描文件
+
+```bash
+python main.py --scan
+```
+
+输出示例：
+
+```
+扫描完成!
+
+总文件数: 125,432
+总大小: 45.2 GB
+扫描时间: 12.34 秒
+
+可安全删除:
+  文件数: 1,234
+  大小: 2.3 GB
+
+需要确认:
+  文件数: 567
+  大小: 1.8 GB
+
+最大的 10 个文件:
+  1.    2.5 GB C:\Users\...\Downloads\video.mp4
+  2.    1.2 GB C:\...\Windows\Installer\...
+```
+
+### 快速清理
+
+```bash
+python main.py --quick
+```
+
+输出示例：
+
+```
+发现 1,234 个安全文件，共 2.3 GB
+
+这些文件包括:
+  - 临时文件 (.tmp, .temp)
+  - 缓存文件 (.cache)
+  - 日志文件 (.log)
+  - 系统垃圾 (thumbs.db, .ds_store)
+
+确认清理？(y/N):
+```
+
+---
+
+## 📊 磁盘监控
+
+```bash
+python main.py --monitor
+```
+
+输出示例：
+
+```
+磁盘使用情况:
+
+  C:\ [████████████████████░░░░░░░░░░] 65.2%
+       326.0 GB / 500.0 GB
+
+使用趋势:
+  C:\: ↑ 0.5 GB/天
+    ⚠️ 预计 15 天后磁盘满
+
+⚠️ 告警:
+  🟡 磁盘 C: 空间不足 (65.2%)
+```
+
+---
+
+## 💡 智能推荐
+
+```bash
 python main.py --recommend
 ```
 
----
+输出示例：
 
-## 🎨 形象系统
+```
+生成了 5 个推荐:
 
-### 内置形象
+1. 🔴 清理磁盘 C:
+   磁盘 C: 使用率 85%，建议清理空间
+   类别: cleanup
+   优先级: 8/10
+   风险: low
+   预计节省: 5.00 GB
 
-| 形象 | 描述 | 状态 |
-|------|------|------|
-| 🕵️ **柯南** | 名侦探柯南卡通形象 | ✅ 可用 |
-| 🤖 **哆啦A梦** | 哆啦A梦卡通形象 | 🔜 开发中 |
-| 🐻 **小熊** | 可爱小熊形象 | 🔜 开发中 |
-| 🎨 **自定义** | 用户自定义形象 | ✅ 可用 |
-
-### 切换形象
-
-```bash
-# 命令行指定
-python main_robot.py --character conan
-
-# 形象选择器
-python main_robot.py --selector
+2. 🟡 清理 Chrome 缓存
+   Chrome 缓存占用 500.00 MB
+   类别: cleanup
+   优先级: 6/10
+   风险: low
+   预计节省: 500.00 MB
 ```
 
-### 导入自定义形象
-
-1. 准备形象配置文件（JSON 格式）
-2. 打开形象选择器
-3. 点击 "导入自定义形象"
-4. 选择配置文件
-5. 确认导入
-
 ---
 
-## 🖥️ 主界面
+## 🖥️ GUI 界面
+
+```bash
+python main.py --gui
+```
 
 ### 功能导航
 
@@ -154,27 +293,19 @@ python main_robot.py --selector
 | **磁盘监控** | 实时监控磁盘使用 |
 | **设置** | 配置选项 |
 
-### 命令行
+### 扫描结果
 
-```bash
-# 交互式 CLI
-python main.py --cli
+扫描结果包含详细信息：
 
-# 系统诊断
-python main.py --diagnosis
-
-# 扫描文件
-python main.py --scan
-
-# 清理文件
-python main.py --clean
-
-# 磁盘监控
-python main.py --monitor
-
-# 智能推荐
-python main.py --recommend
-```
+| 列 | 说明 |
+|----|------|
+| 选择 | 勾选要清理的文件 |
+| 路径 | 文件完整路径 |
+| 大小 | 文件大小 |
+| 类型 | 文件类型名称（如"临时文件"、"缓存文件"） |
+| 风险 | 风险等级（🟢安全/🟡低/🟠中/🔴高） |
+| 影响 | 删除后的影响说明 |
+| 时间 | 最后修改时间 |
 
 ---
 
@@ -196,6 +327,15 @@ python main.py --recommend
 - ✅ **可回滚**：文件移到回收站
 - ✅ **备份优先**：任何可能有风险的操作先备份
 - ✅ **完整日志**：记录所有操作
+- ✅ **风险评估**：每个文件都有风险等级和删除影响说明
+
+### 恢复文件
+
+如果误删文件，可以从回收站恢复：
+
+1. 打开回收站
+2. 找到被删除的文件
+3. 右键 → 还原
 
 ---
 
@@ -208,109 +348,82 @@ clean-bot-v2/
 │   ├── scanner/                # 文件扫描
 │   ├── cleaner/                # 文件清理
 │   ├── monitor/                # 磁盘监控
-│   ├── ai/                     # 智能推荐
+│   ├── ai/                     # 智能推荐 + 对话系统
+│   ├── analyzer/               # 智能文件分析器
 │   └── utils.py                # 工具函数
 ├── ui/                          # 用户界面
 │   ├── main_window.py          # 主窗口
-│   ├── dashboard.py            # 仪表盘
-│   └── robot/                  # 桌面机器人
-│       ├── robot_widget.py    # 机器人控件
-│       ├── character.py       # 角色管理
-│       ├── animation.py       # 动画系统
-│       ├── expression.py      # 表情系统
-│       ├── character_selector.py # 形象选择器
-│       └── characters/        # 角色资源
+│   └── dashboard.py            # 仪表盘
 ├── config/                      # 配置
 ├── tests/                       # 测试
 ├── resources/                   # 资源
-├── main.py                      # 主入口
-├── main_robot.py                # 桌面机器人入口
+├── main.py                      # 主入口（模式选择）
+├── start.bat                    # 启动脚本
+├── create_shortcut.bat          # 创建桌面快捷方式
 ├── requirements.txt             # 依赖
 ├── setup.py                     # 安装脚本
 ├── install.bat                  # 安装脚本
-├── build.bat                    # 打包脚本
-└── README.md                    # 文档
+├── README.md                    # 文档
+├── INSTALL.md                   # 安装指南
+├── QUICKSTART.md                # 快速开始
+├── MIRROR_CN.md                 # 国内镜像配置
+└── LICENSE                      # 许可证
 ```
 
 ---
 
-## 🛠️ 开发
+## ❓ 常见问题
 
-### 安装开发依赖
+### Q1：程序无法启动
 
+**解决**：
 ```bash
-pip install -r requirements.txt
-pip install pytest black flake8 pillow
+# 检查 Python
+python --version
+
+# 安装依赖
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-### 运行测试
+### Q2：pip 安装失败
 
+**解决**：
 ```bash
-# 运行所有测试
-pytest tests/
+# 使用国内镜像
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# 运行特定测试
-pytest tests/test_scanner.py
-pytest tests/test_diagnosis.py
+# 或使用阿里云镜像
+pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/
 ```
 
-### 代码格式化
+### Q3：杀毒软件误报
 
+**解决**：
+1. 将 CleanBot 添加到杀毒软件白名单
+2. 或暂时关闭杀毒软件
+
+### Q4：扫描速度慢
+
+**解决**：
 ```bash
-# 格式化代码
-black .
-
-# 检查代码风格
-flake8 .
-```
-
-### 生成机器人图片
-
-```bash
-# 生成柯南形象
-python ui/robot/characters/conan/generate_images.py
-```
-
-### 打包成 exe
-
-```bash
-# 安装打包工具
-pip install pyinstaller pillow
-
-# 运行打包脚本
-build.bat
-
-# 获取 exe 文件
-dist\CleanBot.exe
+# 减少扫描深度
+python main.py --scan --depth 3
 ```
 
 ---
 
 ## 📚 文档
 
-- **安装指南**：[INSTALL.md](INSTALL.md)
-- **快速开始**：[QUICKSTART.md](QUICKSTART.md)
-- **许可证**：[LICENSE](LICENSE)
+- **README.md**：项目介绍和快速开始
+- **INSTALL.md**：详细安装指南
+- **QUICKSTART.md**：快速开始指南
+- **MIRROR_CN.md**：国内镜像源配置指南
 
 ---
 
 ## 🤝 贡献
 
 欢迎提交 Issue 和 Pull Request！
-
-```bash
-# Fork 项目
-# 创建分支
-git checkout -b feature/my-feature
-
-# 提交更改
-git commit -m "Add my feature"
-
-# 推送
-git push origin feature/my-feature
-
-# 创建 Pull Request
-```
 
 ---
 
@@ -331,16 +444,12 @@ MIT License
 
 ---
 
-## 📞 联系方式
+## 🔗 相关链接
 
-- **GitHub Issues**：https://github.com/your-username/clean-bot-v2/issues
-
----
-
-## ⭐ Star History
-
-如果这个项目对你有帮助，请给它一个 ⭐️！
+- **GitHub 仓库**：https://github.com/5201314ty0609-collab/clean-bot-v2
+- **下载 ZIP**：https://github.com/5201314ty0609-collab/clean-bot-v2/archive/refs/heads/main.zip
+- **Issues**：https://github.com/5201314ty0609-collab/clean-bot-v2/issues
 
 ---
 
-**CleanBot v2.0** — 让你的电脑更干净、更快速、更可爱！🎉
+**CleanBot v2.0** — 让你的电脑更干净、更快速！
