@@ -283,9 +283,12 @@ class MainWindow(QMainWindow):
             ("仪表盘", 0),
             ("系统诊断", 1),
             ("文件扫描", 2),
-            ("智能推荐", 3),
-            ("磁盘监控", 4),
-            ("设置", 5),
+            ("文件迁移", 3),
+            ("应用迁移", 4),
+            ("智能删除", 5),
+            ("智能推荐", 6),
+            ("磁盘监控", 7),
+            ("设置", 8),
         ]
 
         for text, index in nav_buttons:
@@ -337,6 +340,18 @@ class MainWindow(QMainWindow):
         # 文件扫描页面
         self.scan_page = self._create_scan_page()
         self.content_stack.addWidget(self.scan_page)
+
+        # 文件迁移页面
+        self.migrate_page = self._create_migrate_page()
+        self.content_stack.addWidget(self.migrate_page)
+
+        # 应用迁移页面
+        self.app_migrate_page = self._create_app_migrate_page()
+        self.content_stack.addWidget(self.app_migrate_page)
+
+        # 智能删除页面
+        self.interactive_page = self._create_interactive_page()
+        self.content_stack.addWidget(self.interactive_page)
 
         # 智能推荐页面
         self.recommend_page = self._create_recommend_page()
@@ -695,6 +710,292 @@ class MainWindow(QMainWindow):
         monitor_layout.addWidget(self.alerts_table)
 
         layout.addWidget(self.monitor_frame)
+
+        return page
+
+    def _create_migrate_page(self) -> QWidget:
+        """创建文件迁移页面"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_layout = QHBoxLayout()
+        title_label = QLabel("文件迁移")
+        title_label.setFont(QFont("Microsoft YaHei", 20, QFont.Weight.Bold))
+        title_layout.addWidget(title_label)
+
+        title_layout.addStretch()
+
+        layout.addLayout(title_layout)
+
+        # 说明
+        info_label = QLabel("将 C 盘的大文件迁移到其他盘，释放空间。文件内容不会改变，原位置仍可正常访问。")
+        info_label.setFont(QFont("Microsoft YaHei", 11))
+        info_label.setStyleSheet("color: #666;")
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+
+        # 目标盘选择
+        target_layout = QHBoxLayout()
+        target_label = QLabel("迁移到:")
+        target_label.setFont(QFont("Microsoft YaHei", 11))
+        target_layout.addWidget(target_label)
+
+        self.migrate_target_combo = QComboBox()
+        self.migrate_target_combo.setFont(QFont("Microsoft YaHei", 11))
+        self.migrate_target_combo.addItems(["D:\\", "E:\\", "F:\\"])
+        target_layout.addWidget(self.migrate_target_combo)
+
+        target_layout.addStretch()
+        layout.addLayout(target_layout)
+
+        # 扫描按钮
+        scan_migrate_button = QPushButton("扫描可迁移文件")
+        scan_migrate_button.setFont(QFont("Microsoft YaHei", 11))
+        scan_migrate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        scan_migrate_button.clicked.connect(self._scan_migrate_files)
+        layout.addWidget(scan_migrate_button)
+
+        # 迁移文件表格
+        self.migrate_table = QTableWidget()
+        self.migrate_table.setColumnCount(4)
+        self.migrate_table.setHorizontalHeaderLabels(["选择", "文件路径", "大小", "类型"])
+        self.migrate_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.migrate_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.migrate_table.setAlternatingRowColors(True)
+        layout.addWidget(self.migrate_table)
+
+        # 迁移按钮
+        migrate_button = QPushButton("迁移选中文件")
+        migrate_button.setFont(QFont("Microsoft YaHei", 11))
+        migrate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #388E3C;
+            }
+        """)
+        migrate_button.clicked.connect(self._start_migrate)
+        layout.addWidget(migrate_button)
+
+        return page
+
+    def _create_app_migrate_page(self) -> QWidget:
+        """创建应用迁移页面"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_layout = QHBoxLayout()
+        title_label = QLabel("应用迁移")
+        title_label.setFont(QFont("Microsoft YaHei", 20, QFont.Weight.Bold))
+        title_layout.addWidget(title_label)
+
+        title_layout.addStretch()
+
+        layout.addLayout(title_layout)
+
+        # 说明
+        info_label = QLabel("将已安装的应用从 C 盘迁移到其他盘。应用的所有数据和设置都会保留，迁移后可正常打开和使用。")
+        info_label.setFont(QFont("Microsoft YaHei", 11))
+        info_label.setStyleSheet("color: #666;")
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+
+        # 目标盘选择
+        target_layout = QHBoxLayout()
+        target_label = QLabel("迁移到:")
+        target_label.setFont(QFont("Microsoft YaHei", 11))
+        target_layout.addWidget(target_label)
+
+        self.app_target_combo = QComboBox()
+        self.app_target_combo.setFont(QFont("Microsoft YaHei", 11))
+        self.app_target_combo.addItems(["D:\\", "E:\\", "F:\\"])
+        target_layout.addWidget(self.app_target_combo)
+
+        target_layout.addStretch()
+        layout.addLayout(target_layout)
+
+        # 扫描按钮
+        scan_app_button = QPushButton("扫描已安装应用")
+        scan_app_button.setFont(QFont("Microsoft YaHei", 11))
+        scan_app_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        scan_app_button.clicked.connect(self._scan_installed_apps)
+        layout.addWidget(scan_app_button)
+
+        # 应用表格
+        self.app_table = QTableWidget()
+        self.app_table.setColumnCount(5)
+        self.app_table.setHorizontalHeaderLabels(["选择", "应用名称", "安装路径", "大小", "版本"])
+        self.app_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
+        self.app_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
+        self.app_table.setAlternatingRowColors(True)
+        layout.addWidget(self.app_table)
+
+        # 迁移按钮
+        migrate_app_button = QPushButton("迁移选中应用")
+        migrate_app_button.setFont(QFont("Microsoft YaHei", 11))
+        migrate_app_button.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #388E3C;
+            }
+        """)
+        migrate_app_button.clicked.connect(self._start_app_migrate)
+        layout.addWidget(migrate_app_button)
+
+        return page
+
+    def _create_interactive_page(self) -> QWidget:
+        """创建智能删除页面"""
+        page = QWidget()
+        layout = QVBoxLayout(page)
+        layout.setSpacing(20)
+        layout.setContentsMargins(20, 20, 20, 20)
+
+        # 标题
+        title_layout = QHBoxLayout()
+        title_label = QLabel("智能删除")
+        title_label.setFont(QFont("Microsoft YaHei", 20, QFont.Weight.Bold))
+        title_layout.addWidget(title_label)
+
+        title_layout.addStretch()
+
+        layout.addLayout(title_layout)
+
+        # 说明
+        info_label = QLabel("输入文件或应用路径，系统会分析并提供详细信息。确认后会深度清理，包括注册表、快捷方式、启动项等，确保不留残渣。")
+        info_label.setFont(QFont("Microsoft YaHei", 11))
+        info_label.setStyleSheet("color: #666;")
+        info_label.setWordWrap(True)
+        layout.addWidget(info_label)
+
+        # 输入框
+        input_layout = QHBoxLayout()
+        self.delete_path_input = QLineEdit()
+        self.delete_path_input.setFont(QFont("Microsoft YaHei", 11))
+        self.delete_path_input.setPlaceholderText("输入文件或应用路径，例如: C:\\Program Files\\SomeApp")
+        input_layout.addWidget(self.delete_path_input)
+
+        browse_button = QPushButton("浏览")
+        browse_button.setFont(QFont("Microsoft YaHei", 11))
+        browse_button.clicked.connect(self._browse_delete_path)
+        input_layout.addWidget(browse_button)
+
+        analyze_button = QPushButton("分析")
+        analyze_button.setFont(QFont("Microsoft YaHei", 11))
+        analyze_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #1976D2;
+            }
+        """)
+        analyze_button.clicked.connect(self._analyze_delete_target)
+        input_layout.addWidget(analyze_button)
+
+        layout.addLayout(input_layout)
+
+        # 分析结果
+        self.analysis_frame = QFrame()
+        self.analysis_frame.setFrameStyle(QFrame.Shape.StyledPanel)
+        self.analysis_frame.setStyleSheet("""
+            QFrame {
+                background-color: white;
+                border: 1px solid #E0E0E0;
+                border-radius: 10px;
+                padding: 20px;
+            }
+        """)
+        self.analysis_frame.setVisible(False)
+
+        analysis_layout = QVBoxLayout(self.analysis_frame)
+
+        self.analysis_title = QLabel("分析结果")
+        self.analysis_title.setFont(QFont("Microsoft YaHei", 14, QFont.Weight.Bold))
+        analysis_layout.addWidget(self.analysis_title)
+
+        self.analysis_info = QLabel("")
+        self.analysis_info.setFont(QFont("Microsoft YaHei", 11))
+        self.analysis_info.setWordWrap(True)
+        analysis_layout.addWidget(self.analysis_info)
+
+        self.analysis_risk = QLabel("")
+        self.analysis_risk.setFont(QFont("Microsoft YaHei", 11))
+        analysis_layout.addWidget(self.analysis_risk)
+
+        self.analysis_impact = QLabel("")
+        self.analysis_impact.setFont(QFont("Microsoft YaHei", 11))
+        analysis_layout.addWidget(self.analysis_impact)
+
+        self.analysis_related = QLabel("")
+        self.analysis_related.setFont(QFont("Microsoft YaHei", 11))
+        self.analysis_related.setWordWrap(True)
+        analysis_layout.addWidget(self.analysis_related)
+
+        # 删除按钮
+        delete_button = QPushButton("深度删除")
+        delete_button.setFont(QFont("Microsoft YaHei", 11))
+        delete_button.setStyleSheet("""
+            QPushButton {
+                background-color: #FF5722;
+                color: white;
+                border: none;
+                border-radius: 5px;
+                padding: 8px 20px;
+            }
+            QPushButton:hover {
+                background-color: #E64A19;
+            }
+        """)
+        delete_button.clicked.connect(self._execute_deep_delete)
+        analysis_layout.addWidget(delete_button)
+
+        layout.addWidget(self.analysis_frame)
+
+        layout.addStretch()
 
         return page
 
@@ -1258,6 +1559,359 @@ class MainWindow(QMainWindow):
                 files.append(path)
 
         return files
+
+    def _scan_migrate_files(self):
+        """扫描可迁移文件"""
+        from core.scanner.file_scanner import FileScanner
+        from core.utils import get_system_drive
+
+        self.statusBar().showMessage("正在扫描可迁移文件...")
+
+        # 扫描大文件（>100MB）
+        scanner = FileScanner(get_system_drive())
+        result = scanner.scan()
+
+        # 过滤大文件
+        large_files = [f for f in result.largest_files if f.size > 100 * 1024 * 1024]
+
+        # 更新表格
+        self.migrate_table.setRowCount(len(large_files))
+
+        for i, file_info in enumerate(large_files[:50]):  # 最多显示50个
+            # 选择框
+            checkbox = QCheckBox()
+            checkbox.setChecked(False)
+            self.migrate_table.setCellWidget(i, 0, checkbox)
+
+            # 文件路径
+            path_item = QTableWidgetItem(file_info.path)
+            path_item.setFlags(path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.migrate_table.setItem(i, 1, path_item)
+
+            # 大小
+            size_item = QTableWidgetItem(format_size(file_info.size))
+            size_item.setFlags(size_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.migrate_table.setItem(i, 2, size_item)
+
+            # 类型
+            type_name = getattr(file_info, "type_name", "") or file_info.file_type
+            type_item = QTableWidgetItem(type_name)
+            type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.migrate_table.setItem(i, 3, type_item)
+
+        self.statusBar().showMessage(f"扫描完成，发现 {len(large_files)} 个可迁移文件")
+
+    def _start_migrate(self):
+        """开始文件迁移"""
+        from core.migrator.file_migrator import FileMigrator
+
+        # 获取选中的文件
+        files = []
+        for i in range(self.migrate_table.rowCount()):
+            checkbox = self.migrate_table.cellWidget(i, 0)
+            if checkbox and checkbox.isChecked():
+                path = self.migrate_table.item(i, 1).text()
+                files.append(path)
+
+        if not files:
+            QMessageBox.information(self, "提示", "没有选中要迁移的文件")
+            return
+
+        # 获取目标盘
+        target_drive = self.migrate_target_combo.currentText()
+
+        # 确认对话框
+        total_size = 0
+        for i in range(self.migrate_table.rowCount()):
+            checkbox = self.migrate_table.cellWidget(i, 0)
+            if checkbox and checkbox.isChecked():
+                size_text = self.migrate_table.item(i, 2).text()
+                total_size += self._parse_size(size_text)
+
+        reply = QMessageBox.question(
+            self,
+            "确认迁移",
+            f"确定要迁移 {len(files)} 个文件到 {target_drive} 吗？\n\n"
+            f"总大小: {format_size(total_size)}\n\n"
+            f"迁移后原位置仍可正常访问文件。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # 执行迁移
+        self.statusBar().showMessage("正在迁移文件...")
+
+        migrator = FileMigrator(target_drive)
+
+        def progress_callback(prog):
+            self.statusBar().showMessage(f"正在迁移... {prog.current}/{prog.total}")
+
+        result = migrator.migrate_files(files, progress_callback=progress_callback)
+
+        if result.success:
+            QMessageBox.information(
+                self,
+                "迁移完成",
+                f"文件迁移完成！\n\n"
+                f"已迁移: {result.migrated_files} 个文件\n"
+                f"释放空间: {format_size(result.migrated_size)}\n\n"
+                f"原位置仍可正常访问文件。"
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "迁移完成（有错误）",
+                f"文件迁移完成，但有错误：\n\n"
+                f"已迁移: {result.migrated_files} 个文件\n"
+                f"失败: {result.failed_files} 个文件\n\n"
+                f"错误信息:\n" + "\n".join(result.errors[:5])
+            )
+
+        self.statusBar().showMessage("迁移完成")
+
+    def _scan_installed_apps(self):
+        """扫描已安装应用"""
+        from core.migrator.app_migrator import AppMigrator
+
+        self.statusBar().showMessage("正在扫描已安装应用...")
+
+        migrator = AppMigrator()
+        apps = migrator.scan_installed_apps()
+
+        # 过滤 C 盘应用
+        c_apps = [app for app in apps if app.install_path.lower().startswith("c:\\")]
+
+        # 更新表格
+        self.app_table.setRowCount(len(c_apps))
+
+        for i, app in enumerate(c_apps[:100]):  # 最多显示100个
+            # 选择框
+            checkbox = QCheckBox()
+            checkbox.setChecked(False)
+            self.app_table.setCellWidget(i, 0, checkbox)
+
+            # 应用名称
+            name_item = QTableWidgetItem(app.name)
+            name_item.setFlags(name_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.app_table.setItem(i, 1, name_item)
+
+            # 安装路径
+            path_item = QTableWidgetItem(app.install_path)
+            path_item.setFlags(path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.app_table.setItem(i, 2, path_item)
+
+            # 大小
+            size_item = QTableWidgetItem(format_size(app.size))
+            size_item.setFlags(size_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.app_table.setItem(i, 3, size_item)
+
+            # 版本
+            version_item = QTableWidgetItem(app.version)
+            version_item.setFlags(version_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.app_table.setItem(i, 4, version_item)
+
+        self.statusBar().showMessage(f"扫描完成，发现 {len(c_apps)} 个 C 盘应用")
+
+    def _start_app_migrate(self):
+        """开始应用迁移"""
+        from core.migrator.app_migrator import AppMigrator, AppInfo
+
+        # 获取选中的应用
+        selected_apps = []
+        for i in range(self.app_table.rowCount()):
+            checkbox = self.app_table.cellWidget(i, 0)
+            if checkbox and checkbox.isChecked():
+                name = self.app_table.item(i, 1).text()
+                path = self.app_table.item(i, 2).text()
+                selected_apps.append((name, path))
+
+        if not selected_apps:
+            QMessageBox.information(self, "提示", "没有选中要迁移的应用")
+            return
+
+        # 获取目标盘
+        target_drive = self.app_target_combo.currentText()
+
+        # 确认对话框
+        reply = QMessageBox.question(
+            self,
+            "确认迁移",
+            f"确定要迁移 {len(selected_apps)} 个应用到 {target_drive} 吗？\n\n"
+            f"⚠️ 请确保要迁移的应用已关闭！\n\n"
+            f"迁移后应用的所有数据和设置都会保留，可正常打开和使用。",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # 执行迁移
+        self.statusBar().showMessage("正在迁移应用...")
+
+        migrator = AppMigrator(target_drive)
+        migrator.scan_installed_apps()
+
+        success_count = 0
+        fail_count = 0
+        errors = []
+
+        for app_name, app_path in selected_apps:
+            app = migrator.get_app_info(app_name)
+            if not app:
+                errors.append(f"未找到应用: {app_name}")
+                fail_count += 1
+                continue
+
+            def progress_callback(msg, percent):
+                self.statusBar().showMessage(f"正在迁移 {app_name}: {msg}")
+
+            result = migrator.migrate_app(app, progress_callback=progress_callback)
+
+            if result.success:
+                success_count += 1
+            else:
+                fail_count += 1
+                errors.extend(result.errors)
+
+        if fail_count == 0:
+            QMessageBox.information(
+                self,
+                "迁移完成",
+                f"应用迁移完成！\n\n"
+                f"已迁移: {success_count} 个应用\n\n"
+                f"应用的所有数据和设置都已保留，可正常打开和使用。"
+            )
+        else:
+            QMessageBox.warning(
+                self,
+                "迁移完成（有错误）",
+                f"应用迁移完成，但有错误：\n\n"
+                f"成功: {success_count} 个应用\n"
+                f"失败: {fail_count} 个应用\n\n"
+                f"错误信息:\n" + "\n".join(errors[:5])
+            )
+
+        self.statusBar().showMessage("迁移完成")
+
+    def _browse_delete_path(self):
+        """浏览删除路径"""
+        path = QFileDialog.getExistingDirectory(self, "选择要删除的文件夹")
+        if path:
+            self.delete_path_input.setText(path)
+
+    def _analyze_delete_target(self):
+        """分析删除目标"""
+        from core.interactive.interactive_cleaner import InteractiveCleaner
+
+        path = self.delete_path_input.text().strip()
+        if not path:
+            QMessageBox.information(self, "提示", "请输入文件或应用路径")
+            return
+
+        if not os.path.exists(path):
+            QMessageBox.warning(self, "错误", "路径不存在")
+            return
+
+        # 分析目标
+        cleaner = InteractiveCleaner()
+        info = cleaner.get_file_info_summary(path)
+
+        # 显示分析结果
+        self.analysis_frame.setVisible(True)
+
+        self.analysis_title.setText(f"分析结果: {info['name']}")
+
+        self.analysis_info.setText(
+            f"类型: {info['type_name']}\n"
+            f"大小: {info['size_formatted']}\n"
+            f"路径: {info['path']}"
+        )
+
+        # 风险等级
+        risk_icon = {
+            "low": "🟢 低风险",
+            "medium": "🟡 中风险",
+            "high": "🔴 高风险",
+        }.get(info['risk_level'], "⚪ 未知风险")
+
+        self.analysis_risk.setText(f"风险等级: {risk_icon}")
+        if info['risk_reason']:
+            self.analysis_risk.setText(f"风险等级: {risk_icon}\n原因: {info['risk_reason']}")
+
+        # 删除影响
+        if info['delete_impact']:
+            self.analysis_impact.setText(f"删除影响: {info['delete_impact']}")
+
+        # 关联项
+        if info['related_items']:
+            related_text = "⚠️ 发现关联项（也会被删除）:\n"
+            for item in info['related_items'][:5]:
+                related_text += f"  - {item}\n"
+            if info['related_count'] > 5:
+                related_text += f"  ... 还有 {info['related_count'] - 5} 项"
+            self.analysis_related.setText(related_text)
+        else:
+            self.analysis_related.setText("未发现关联项")
+
+    def _execute_deep_delete(self):
+        """执行深度删除"""
+        from core.interactive.interactive_cleaner import InteractiveCleaner
+        from core.deep_cleaner.deep_cleaner import DeepCleaner
+
+        path = self.delete_path_input.text().strip()
+        if not path:
+            return
+
+        # 获取分析信息
+        cleaner = InteractiveCleaner()
+        info = cleaner.get_file_info_summary(path)
+
+        # 二次确认
+        confirm_msg = cleaner.get_confirmation_message(cleaner.analyze_file(path))
+
+        reply = QMessageBox.question(
+            self,
+            "二次确认 - 深度删除",
+            confirm_msg + "\n\n确定要删除吗？",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        # 执行深度删除
+        self.statusBar().showMessage("正在深度删除...")
+
+        result = cleaner.delete_file(path)
+
+        if result.success:
+            QMessageBox.information(
+                self,
+                "删除完成",
+                f"深度删除完成！\n\n"
+                f"已删除: {result.deleted_files} 个文件\n"
+                f"清理注册表: {result.deleted_registry} 项\n"
+                f"清理快捷方式: {result.deleted_shortcuts} 个\n"
+                f"释放空间: {format_size(result.freed_size)}\n\n"
+                f"所有相关项目已清理干净。"
+            )
+
+            # 清空输入框和分析结果
+            self.delete_path_input.clear()
+            self.analysis_frame.setVisible(False)
+        else:
+            QMessageBox.warning(
+                self,
+                "删除失败",
+                f"深度删除失败：\n\n" + "\n".join(result.errors)
+            )
+
+        self.statusBar().showMessage("删除完成")
 
     def set_robot(self, robot):
         """Set the robot reference for task integration."""
