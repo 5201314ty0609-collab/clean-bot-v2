@@ -31,12 +31,13 @@ CleanBot 是一个**智能桌面清理机器人**，具备以下特性：
 
 ```bash
 # 方式 A：使用 git（推荐）
-git clone https://github.com/your-username/clean-bot-v2.git
+git clone https://github.com/5201314ty0609-collab/clean-bot-v2.git
 
 # 方式 B：下载 ZIP
-# 1. 访问 GitHub 页面
-# 2. 点击 "Code" → "Download ZIP"
-# 3. 解压到任意目录
+# 1. 访问 https://github.com/5201314ty0609-collab/clean-bot-v2
+# 2. 点击绿色的 "Code" 按钮
+# 3. 选择 "Download ZIP"
+# 4. 解压到任意目录
 ```
 
 #### 步骤 2：运行安装脚本
@@ -48,6 +49,9 @@ cd clean-bot-v2
 # 双击运行 install.bat
 # 或在命令行中运行：
 install.bat
+```
+
+**安装脚本会自动使用国内镜像源，无需代理即可安装！**
 ```
 
 安装脚本会自动：

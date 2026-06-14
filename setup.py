@@ -29,7 +29,7 @@ setup(
     description="智能桌面清理机器人",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/holyty/clean-bot-v2",
+    url="https://github.com/5201314ty0609-collab/clean-bot-v2",
     packages=find_packages(),
     python_requires=">=3.10",
     install_requires=requirements,

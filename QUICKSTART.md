@@ -5,11 +5,12 @@
 ### 步骤 1：下载项目
 
 ```bash
-# 方式 1：使用 git
-git clone https://github.com/your-username/clean-bot-v2.git
+# 方式 1：使用 git（推荐）
+git clone https://github.com/5201314ty0609-collab/clean-bot-v2.git
 
 # 方式 2：下载 ZIP
-# 访问 GitHub 页面，点击 "Code" → "Download ZIP"
+# 访问 https://github.com/5201314ty0609-collab/clean-bot-v2
+# 点击 "Code" → "Download ZIP"
 ```
 
 ### 步骤 2：安装依赖
@@ -18,13 +19,15 @@ git clone https://github.com/your-username/clean-bot-v2.git
 # 进入项目目录
 cd clean-bot-v2
 
-# 安装依赖
-pip install -r requirements.txt
+# 安装依赖（使用国内镜像，无需代理）
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-**如果 pip 速度慢，使用国内镜像：**
+**或者直接运行安装脚本（自动使用国内镜像）：**
 ```bash
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# 双击 install.bat
+# 或在命令行运行：
+install.bat
 ```
 
 ### 步骤 3：生成机器人图片

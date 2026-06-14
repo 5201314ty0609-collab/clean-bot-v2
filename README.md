@@ -3,8 +3,11 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
+[![国内可用](https://img.shields.io/badge/国内可用-无需代理-green.svg)](MIRROR_CN.md)
 
 > 一个部署在 Windows 上的**智能系统优化助手**，具备可爱的桌面机器人形象、智能诊断、实时监控、多元化清理等功能。
+
+**🇨🇳 国内用户请注意：本项目支持国内镜像源，无需代理即可安装使用！** [查看国内镜像配置指南](MIRROR_CN.md)
 
 ---
 
@@ -51,23 +54,30 @@
 
 ## 🚀 快速开始
 
-### 安装
+### 安装（国内用户）
 
 ```bash
 # 1. 克隆项目
-git clone https://github.com/your-username/clean-bot-v2.git
+git clone https://github.com/5201314ty0609-collab/clean-bot-v2.git
 
 # 2. 进入目录
 cd clean-bot-v2
 
-# 3. 安装依赖
-pip install -r requirements.txt
+# 3. 安装依赖（使用国内镜像，无需代理）
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 # 4. 生成机器人图片
 python ui/robot/characters/conan/generate_images.py
 
 # 5. 启动程序
 python main_robot.py
+```
+
+**或者直接运行安装脚本（自动使用国内镜像）：**
+```bash
+# 双击 install.bat
+# 或在命令行运行：
+install.bat
 ```
 
 ### 使用
