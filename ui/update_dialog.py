@@ -105,6 +105,7 @@ class UpdateDialog(QDialog):
         skip_btn.clicked.connect(self.reject)
         button_layout.addWidget(skip_btn)
 
+        # 直接下载按钮（如果有下载链接）
         if self.update_info.download_url:
             download_btn = QPushButton("下载更新")
             download_btn.setStyleSheet("""
@@ -118,12 +119,33 @@ class UpdateDialog(QDialog):
             download_btn.clicked.connect(self._open_download)
             button_layout.addWidget(download_btn)
 
+        # 手动下载页按钮（始终显示，作为备用）
+        page_btn = QPushButton("打开下载页")
+        page_btn.setStyleSheet("""
+            QPushButton {
+                background: #ffffff; color: #2563eb; border: 1px solid #2563eb;
+                border-radius: 6px; padding: 10px 20px; font-size: 13px;
+            }
+            QPushButton:hover { background: #eff6ff; }
+        """)
+        page_btn.clicked.connect(self._open_download_page)
+        button_layout.addWidget(page_btn)
+
         layout.addLayout(button_layout)
 
     def _open_download(self):
-        """在浏览器中打开下载链接。"""
+        """在浏览器中打开直接下载链接。"""
         import webbrowser
-        webbrowser.open(self.update_info.download_url)
+        if self.update_info.download_url:
+            webbrowser.open(self.update_info.download_url)
+        self.accept()
+
+    def _open_download_page(self):
+        """打开手动下载页面（备用方案）。"""
+        import webbrowser
+        for page_url in self.update_info.download_pages:
+            webbrowser.open(page_url)
+            break  # 只打开第一个可用页面
         self.accept()
 
 
