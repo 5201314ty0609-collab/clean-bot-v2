@@ -42,23 +42,16 @@ echo.
 :: ── 3. 安装依赖 ──
 echo [3/6] 安装依赖包...
 
-:: 先尝试清华镜像
-pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet 2>nul
-if errorlevel 1 (
-    :: 尝试阿里云镜像
-    echo   清华源失败，尝试阿里云...
-    pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --quiet 2>nul
-)
-if errorlevel 1 (
-    :: 尝试默认源
-    echo   阿里云失败，尝试默认源...
-    pip install -r requirements.txt --quiet 2>nul
-)
-if errorlevel 1 (
-    echo   ✗ 依赖安装失败！
-    echo   请检查网络连接后重试
-    pause & exit /b 1
-)
+:: 逐个安装，单个失败不阻断
+echo   安装 PyQt6...
+pip install PyQt6>=6.5.0 -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet 2>nul || pip install PyQt6>=6.5.0 --quiet 2>nul
+echo   安装 psutil...
+pip install psutil>=5.9.0 -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet 2>nul || pip install psutil>=5.9.0 --quiet 2>nul
+echo   安装 Pillow...
+pip install Pillow>=10.0.0 -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet 2>nul || pip install Pillow>=10.0.0 --quiet 2>nul
+echo   安装 send2trash...
+pip install send2trash>=1.8.0 -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet 2>nul || echo     (send2trash 跳过，不影响核心功能)
+
 echo   ✓ OK
 echo.
 
