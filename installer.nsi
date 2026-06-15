@@ -6,7 +6,7 @@
 
 ; 定义常量
 !define PRODUCT_NAME "CleanBot"
-!define PRODUCT_VERSION "2.0.0"
+!define PRODUCT_VERSION "2.1.0"
 !define PRODUCT_PUBLISHER "PHOENIX"
 !define PRODUCT_WEB_SITE "https://gitee.com/holyty/clean-bot-v2"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\App Paths\CleanBot.exe"

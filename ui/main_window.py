@@ -1796,7 +1796,7 @@ def main():
     """GUI 入口"""
     app = QApplication(sys.argv)
     app.setApplicationName("CleanBot")
-    app.setApplicationVersion("2.0.0")
+    app.setApplicationVersion("2.1.0")
     app.setOrganizationName("PHOENIX")
 
     # 应用级图标（内嵌，无需文件）

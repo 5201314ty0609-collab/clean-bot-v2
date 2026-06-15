@@ -2,7 +2,7 @@
 CleanBot v2.0 -- Core Engine Module
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 __author__ = "PHOENIX"
 
 # Lazy imports to avoid circular dependencies
