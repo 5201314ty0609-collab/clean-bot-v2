@@ -1,23 +1,66 @@
 #!/usr/bin/env python3
 """
-CleanBot v2.0 -- 智能桌面清理机器人
+CleanBot v2.0 — 智能桌面清理机器人
 
-一键启动，简单易用的系统清理工具。
+双击即可启动。无需命令行，无需配置。
 """
 
 import sys
 import os
 import subprocess
+import traceback
 from pathlib import Path
 from typing import NoReturn
 
-# 添加项目根目录到路径
 PROJECT_ROOT = Path(__file__).parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 全局异常处理 — 电脑小白不会看到可怕的报错窗口
+# ═══════════════════════════════════════════════════════════════════════════
+
+def _global_exception_hook(exc_type, exc_value, exc_tb):
+    """捕获所有未处理异常，显示友好对话框而非崩溃。"""
+    error_msg = "".join(traceback.format_exception(exc_type, exc_value, exc_tb))
+    # 写入日志文件
+    log_dir = Path(os.path.expanduser("~")) / "CleanBot" / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_file = log_dir / "crash.log"
+    with open(log_file, "a", encoding="utf-8") as f:
+        f.write(f"\n{'='*60}\n")
+        f.write(f"CleanBot v2.0 Crash Report\n")
+        f.write(f"{'='*60}\n")
+        f.write(error_msg)
+
+    # 尝试用 GUI 弹窗（如果 PyQt 不可用则 print）
+    try:
+        from PyQt6.QtWidgets import QApplication, QMessageBox
+        app = QApplication.instance() or QApplication(sys.argv)
+        QMessageBox.critical(
+            None, "CleanBot — 出错了",
+            f"很抱歉，程序遇到了意外错误。\n\n"
+            f"请尝试以下操作：\n"
+            f"  1. 重启 CleanBot\n"
+            f"  2. 如果问题持续，请联系开发者\n\n"
+            f"错误详情已保存到：\n{log_file}"
+        )
+    except Exception:
+        print(f"\n[CleanBot 错误] 详情已保存到 {log_file}", file=sys.stderr)
+        print(error_msg, file=sys.stderr)
+
+    sys.exit(1)
+
+
+sys.excepthook = _global_exception_hook
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# 辅助函数
+# ═══════════════════════════════════════════════════════════════════════════
+
 def _show_error(title: str, message: str) -> None:
-    """显示错误信息 — 优先用 QMessageBox，降级到 print。"""
+    """显示错误信息 — 优先 QMessageBox，降级到 print。"""
     try:
         from PyQt6.QtWidgets import QApplication, QMessageBox
         app = QApplication(sys.argv)
@@ -33,10 +76,14 @@ def _fatal_error(title: str, message: str, exit_code: int = 1) -> NoReturn:
 
 
 def check_platform() -> None:
-    """检查运行平台，非 Windows 给出警告。"""
+    """检查运行平台，非 Windows 给出警告但不阻止运行。"""
     if sys.platform != "win32":
-        print("⚠️  警告: CleanBot 主要为 Windows 设计")
-        print("   部分功能在非 Windows 系统上可能不可用\n")
+        _show_error(
+            "CleanBot",
+            "⚠️ 当前系统非 Windows\n\n"
+            "CleanBot 为 Windows 设计，在 macOS/Linux 上大部分功能不可用。\n"
+            "建议在 Windows 10/11 上运行。"
+        )
 
 
 def ensure_dependencies() -> bool:
@@ -46,39 +93,29 @@ def ensure_dependencies() -> bool:
         'psutil': 'psutil>=5.9.0',
         'Pillow': 'Pillow>=10.0.0',
     }
-
-    missing = [
-        pip_name
-        for package, pip_name in required.items()
-        if _import_failed(package)
-    ]
-
+    missing = [pip_name for pkg, pip_name in required.items() if _import_failed(pkg)]
     if not missing:
         return True
 
-    print("正在安装依赖，请稍等...")
+    print("正在安装依赖...")
     mirrors = [
         ['https://pypi.tuna.tsinghua.edu.cn/simple', 'pypi.tuna.tsinghua.edu.cn'],
         ['https://mirrors.aliyun.com/pypi/simple/', 'mirrors.aliyun.com'],
     ]
-
     for mirror_url, mirror_host in mirrors:
         try:
             subprocess.check_call(
                 [sys.executable, '-m', 'pip', 'install', *missing,
                  '-i', mirror_url, '--trusted-host', mirror_host],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
             )
             return True
         except subprocess.CalledProcessError:
             continue
-
     return False
 
 
 def _import_failed(package: str) -> bool:
-    """检查包是否无法导入。"""
     try:
         __import__(package)
         return False
@@ -86,14 +123,19 @@ def _import_failed(package: str) -> bool:
         return True
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# 主入口
+# ═══════════════════════════════════════════════════════════════════════════
+
 def main() -> None:
-    """主入口 — 检查依赖并启动 GUI。"""
+    """CleanBot 主入口 — 启动 GUI。"""
     check_platform()
 
     if not ensure_dependencies():
         _fatal_error(
-            "CleanBot v2.0",
-            "依赖安装失败，请手动运行：\n"
+            "CleanBot",
+            "依赖安装失败。\n\n"
+            "请手动运行：\n"
             "pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple"
         )
 
@@ -101,9 +143,9 @@ def main() -> None:
         from ui.main_window import main as gui_main
         gui_main()
     except ImportError as e:
-        _fatal_error("CleanBot v2.0", f"启动失败：{e}\n请确保所有文件完整。")
+        _fatal_error("CleanBot", f"启动失败：缺少必要文件\n{e}")
     except Exception as e:
-        _fatal_error("CleanBot v2.0", f"发生错误：{e}\n请尝试重新安装。")
+        _fatal_error("CleanBot", f"启动失败：{e}")
 
 
 if __name__ == "__main__":

@@ -45,6 +45,8 @@ datas = [
     ('config/file_types.json', 'config'),
     ('config/update_config.json', 'config'),
     ('resources/icons/cleanbot.ico', 'resources/icons'),
+    # Robot character resources
+    ('ui/robot/characters/conan/config.json', 'ui/robot/characters/conan'),
 ]
 
 # ── 排除不需要的模块（减小体积） ──
