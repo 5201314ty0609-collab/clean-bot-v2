@@ -24,7 +24,7 @@ from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QAction
 from core.monitor.disk_monitor import DiskMonitor, format_size
 
 # 导入自定义控件
-from ui.dashboard import DashboardView, StatCard, RecommendationsWidget
+from ui.dashboard import DashboardView, StatCard, RecommendationsWidget, CircularProgress
 
 # 导入后台线程
 from ui.threads import (
