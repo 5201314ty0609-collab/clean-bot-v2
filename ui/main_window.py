@@ -1105,68 +1105,54 @@ class MainWindow(QMainWindow):
 
         self.files_table.setRowCount(len(files))
 
-        # Risk level colors
-        risk_colors = {
-            "safe": QColor("#4CAF50"),
-            "low": QColor("#8BC34A"),
-            "medium": QColor("#FFC107"),
-            "high": QColor("#FF5722"),
-            "critical": QColor("#F44336"),
-        }
+        def _r_color(label):
+            if "安全" in label: return QColor("#16a34a")
+            if "低" in label: return QColor("#65a30d")
+            if "注意" in label: return QColor("#eab308")
+            if "危险" in label: return QColor("#dc2626")
+            return QColor("#94a3b8")
 
         for i, file_info in enumerate(files):
-            # 选择框
-            checkbox = QCheckBox()
-            checkbox.setChecked(True)
-            checkbox.stateChanged.connect(self._update_selected_count)
-            self.files_table.setCellWidget(i, 0, checkbox)
+            cb = QCheckBox()
+            cb.setChecked(True)
+            cb.stateChanged.connect(self._update_selected_count)
+            self.files_table.setCellWidget(i, 0, cb)
 
-            # 文件路径
-            path_item = QTableWidgetItem(file_info.path)
-            path_item.setFlags(path_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.files_table.setItem(i, 1, path_item)
+            pi = QTableWidgetItem(file_info.path)
+            pi.setFlags(pi.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            pi.setToolTip(file_info.path)
+            self.files_table.setItem(i, 1, pi)
 
-            # 大小
-            size_item = QTableWidgetItem(format_size(file_info.size))
-            size_item.setFlags(size_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            size_item.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
-            self.files_table.setItem(i, 2, size_item)
+            si = QTableWidgetItem(format_size(file_info.size))
+            si.setFlags(si.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            si.setTextAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
+            self.files_table.setItem(i, 2, si)
 
-            # 类型名称
-            type_name = getattr(file_info, "type_name", "") or file_info.file_type
-            type_item = QTableWidgetItem(type_name)
-            type_item.setFlags(type_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.files_table.setItem(i, 3, type_item)
+            tn = getattr(file_info, "type_name", "") or file_info.file_type
+            ti = QTableWidgetItem(tn)
+            ti.setFlags(ti.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.files_table.setItem(i, 3, ti)
 
-            # 风险等级 (color-coded)
-            risk = getattr(file_info, "risk_level", "safe")
-            risk_label = {
-                "safe": "Safe",
-                "low": "Low",
-                "medium": "Medium",
-                "high": "High",
-                "critical": "Critical",
-            }.get(risk, risk)
-            risk_item = QTableWidgetItem(risk_label)
-            risk_item.setFlags(risk_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            color = risk_colors.get(risk)
-            if color:
-                risk_item.setForeground(color)
-                risk_item.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
-            self.files_table.setItem(i, 4, risk_item)
+            risk = getattr(file_info, "risk_level", "--")
+            ri = QTableWidgetItem(risk)
+            ri.setFlags(ri.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            ri.setForeground(_r_color(risk))
+            detail = getattr(file_info, "risk_reason", "") or getattr(file_info, "impact", "")
+            ri.setToolTip(f"{risk}\n{detail}")
+            self.files_table.setItem(i, 4, ri)
 
-            # 删除影响
             impact = getattr(file_info, "impact", "")
-            impact_item = QTableWidgetItem(impact)
-            impact_item.setFlags(impact_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.files_table.setItem(i, 5, impact_item)
+            short = impact[:28] + "…" if len(impact) > 28 else impact
+            ii = QTableWidgetItem(short)
+            ii.setFlags(ii.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            ii.setToolTip(impact)
+            self.files_table.setItem(i, 5, ii)
 
-            # 修改时间
             from datetime import datetime
             mtime = datetime.fromtimestamp(file_info.modified)
-            time_item = QTableWidgetItem(mtime.strftime("%Y-%m-%d %H:%M"))
-            time_item.setFlags(time_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.files_table.setItem(i, 6, time_item)
+            ti2 = QTableWidgetItem(mtime.strftime("%Y-%m-%d %H:%M"))
+            ti2.setFlags(ti2.flags() & ~Qt.ItemFlag.ItemIsEditable)
+            self.files_table.setItem(i, 6, ti2)
 
         self._update_selected_count()
 
