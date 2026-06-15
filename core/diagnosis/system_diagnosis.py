@@ -15,6 +15,16 @@ from datetime import datetime
 from enum import Enum
 
 
+def _run_hidden(cmd: list, timeout: int = 60) -> subprocess.CompletedProcess:
+    """运行命令但不弹出控制台窗口（EXE 打包后必需）。"""
+    if sys.platform == "win32":
+        return subprocess.run(
+            cmd, capture_output=True, text=True, timeout=timeout,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+
+
 class ProblemSeverity(Enum):
     """问题严重程度"""
     LOW = "low"
@@ -562,7 +572,7 @@ class SystemDiagnosis:
     def _check_system_files_integrity(self) -> Optional[bool]:
         """检查系统文件完整性。返回 None 表示无法检查。"""
         try:
-            result = subprocess.run(
+            result = _run_hidden(
                 ["sfc", "/verifyonly"],
                 capture_output=True,
                 text=True,
@@ -575,7 +585,7 @@ class SystemDiagnosis:
     def _has_pending_updates(self) -> Optional[bool]:
         """检查是否有待安装的更新。返回 None 表示无法检查。"""
         try:
-            result = subprocess.run(
+            result = _run_hidden(
                 ["powershell", "-Command",
                  "(New-Object -ComObject Microsoft.Update.Session)"
                  ".CreateUpdateSearcher().Search('IsInstalled=0').Updates.Count"],
@@ -592,7 +602,7 @@ class SystemDiagnosis:
     def _has_restore_points(self) -> Optional[bool]:
         """检查是否有系统还原点。返回 None 表示无法检查。"""
         try:
-            result = subprocess.run(
+            result = _run_hidden(
                 ["powershell", "-Command",
                  "(Get-ComputerRestorePoint | Measure-Object).Count"],
                 capture_output=True,
@@ -608,7 +618,7 @@ class SystemDiagnosis:
     def _is_defender_enabled(self) -> Optional[bool]:
         """检查 Windows Defender 是否启用。返回 None 表示无法检查。"""
         try:
-            result = subprocess.run(
+            result = _run_hidden(
                 ["powershell", "-Command",
                  "Get-MpComputerStatus | Select-Object -ExpandProperty "
                  "RealTimeProtectionEnabled"],
@@ -627,7 +637,7 @@ class SystemDiagnosis:
     def _is_firewall_enabled(self) -> Optional[bool]:
         """检查防火墙是否启用。返回 None 表示无法检查。"""
         try:
-            result = subprocess.run(
+            result = _run_hidden(
                 ["netsh", "advfirewall", "show", "allprofiles", "state"],
                 capture_output=True,
                 text=True,
@@ -662,7 +672,7 @@ class SystemDiagnosis:
         """检查磁盘健康"""
         try:
             # 使用 wmic 检查磁盘状态
-            result = subprocess.run(
+            result = _run_hidden(
                 ["wmic", "diskdrive", "get", "status"],
                 capture_output=True,
                 text=True,
@@ -684,7 +694,7 @@ class SystemDiagnosis:
 
         try:
             # 使用碎片分析工具
-            result = subprocess.run(
+            result = _run_hidden(
                 ["defrag", f"{letter}:", "/a", "/v"],
                 capture_output=True,
                 text=True,

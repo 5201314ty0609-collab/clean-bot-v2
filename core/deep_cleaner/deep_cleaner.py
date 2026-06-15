@@ -218,6 +218,7 @@ class DeepCleaner:
                 capture_output=True,
                 text=True,
                 timeout=30,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
             )
 
             if result.returncode == 0:
@@ -409,6 +410,7 @@ class DeepCleaner:
                             ["schtasks", "/delete", "/tn", task_name, "/f"],
                             capture_output=True,
                             timeout=30,
+                            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
                         )
                     except (subprocess.TimeoutExpired, FileNotFoundError):
                         result.warnings.append(f"计划任务删除失败: {task}")
