@@ -19,8 +19,15 @@ if errorlevel 1 (
     echo   安装时勾选 "Add Python to PATH"
     pause & exit /b 1
 )
-python --version
-echo   ✓ OK
+:: 检查版本 >= 3.10
+for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
+for /f "tokens=2 delims=." %%a in ("%PYVER%") do set "PYMINOR=%%a"
+if %PYMINOR% LSS 10 (
+    echo   ✗ Python %PYVER% 太旧，需要 Python 3.10+
+    echo   当前版本: %PYVER%
+    pause & exit /b 1
+)
+echo   Python %PYVER% ✓
 echo.
 
 :: ── 2. 升级 pip ──

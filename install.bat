@@ -28,8 +28,21 @@ if errorlevel 1 (
     pause
     exit /b 1
 )
-python --version
-echo   ✓ OK
+
+:: 检查 Python 版本号 (需要 >= 3.10)
+for /f "tokens=2 delims= " %%v in ('python --version 2^>^&1') do set "PYVER=%%v"
+for /f "tokens=2 delims=." %%a in ("%PYVER%") do set "PYMINOR=%%a"
+if %PYMINOR% LSS 10 (
+    echo   ✗ Python %PYVER% 太旧，需要 Python 3.10+
+    echo   当前版本: %PYVER%
+    echo   请安装 Python 3.10 或更新版本
+    echo   https://www.python.org/downloads/
+    echo   安装时务必勾选 "Add Python to PATH"
+    start https://www.python.org/downloads/
+    pause
+    exit /b 1
+)
+echo   Python %PYVER% ✓
 echo.
 
 :: ── 2. 安装依赖 ──
