@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
     QFrame, QScrollArea, QProgressBar, QSizePolicy,
 )
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
-from PyQt6.QtGui import QFont, QPainter, QPen, QBrush, QColor
+from PyQt6.QtGui import QFont
 
 from core.monitor.disk_monitor import DiskMonitor, format_size
 from core.utils import format_size as fmt
@@ -114,47 +114,58 @@ class RingGauge(QWidget):
 # ═══════════════════════════════════════════════════════════════════════════
 
 class StatCard(QFrame):
-    """现代信息卡片"""
+    """大图标信息卡片"""
 
     def __init__(self, icon: str, label: str, value: str, accent: str = "#3b82f6"):
         super().__init__()
+        accent_rgb = {
+            "#ef4444": "rgba(239,68,68,0.12)",
+            "#3b82f6": "rgba(59,130,246,0.12)",
+            "#22c55e": "rgba(34,197,94,0.12)",
+            "#8b5cf6": "rgba(139,92,246,0.12)",
+            "#eab308": "rgba(234,179,8,0.12)",
+        }.get(accent, "rgba(59,130,246,0.12)")
+
         self.setStyleSheet(f"""
             QFrame {{
                 background: #ffffff;
                 border: 1px solid #e2e8f0;
-                border-radius: 14px;
+                border-radius: 16px;
                 padding: 20px;
             }}
+            QFrame:hover {{
+                border-color: {accent};
+                background: #fafbfd;
+            }}
         """)
-        self.setMinimumHeight(100)
+        self.setMinimumHeight(110)
 
-        layout = QHBoxLayout(self)
+        layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(16)
+        layout.setSpacing(12)
 
-        # 图标
+        # 大图标在上
         icon_wrap = QLabel(icon)
-        icon_wrap.setFixedSize(48, 48)
+        icon_wrap.setFixedSize(52, 52)
         icon_wrap.setAlignment(Qt.AlignmentFlag.AlignCenter)
         icon_wrap.setStyleSheet(f"""
-            background: {accent}18; border-radius: 12px; font-size: 22px; border: none;
+            background: {accent_rgb}; border-radius: 14px; font-size: 28px; border: none;
         """)
         layout.addWidget(icon_wrap)
 
-        # 文字
-        text_col = QVBoxLayout()
+        # 数值在下
         self.value_label = QLabel(value)
-        self.value_label.setFont(QFont("Microsoft YaHei", 22, QFont.Weight.Bold))
+        self.value_label.setFont(QFont("Microsoft YaHei", 24, QFont.Weight.Bold))
         self.value_label.setStyleSheet(f"color: #0f172a; border: none;")
-        text_col.addWidget(self.value_label)
+        self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.value_label)
 
+        # 标签在最下
         label_w = QLabel(label)
-        label_w.setFont(QFont("Microsoft YaHei", 11))
+        label_w.setFont(QFont("Microsoft YaHei", 10))
         label_w.setStyleSheet("color: #64748b; border: none;")
-        text_col.addWidget(label_w)
-        layout.addLayout(text_col)
-
-        layout.addStretch()
+        label_w.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label_w)
 
     def set_value(self, v: str):
         self.value_label.setText(v)

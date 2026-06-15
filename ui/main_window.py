@@ -24,12 +24,11 @@ from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QAction
 from core.monitor.disk_monitor import DiskMonitor, format_size
 
 # 导入自定义控件
-from ui.dashboard import DashboardView, CircularProgress, StatCard, RecommendationsWidget
+from ui.dashboard import DashboardView, StatCard, RecommendationsWidget
 
 # 导入后台线程
 from ui.threads import (
-    ScanThread, CleanThread, DiagnosisThread,
-    MonitorThread, RecommendationThread,
+    ScanThread, CleanThread, MonitorThread, RecommendationThread,
 )
 
 # 导入对话系统
@@ -217,14 +216,13 @@ class MainWindow(QMainWindow):
         # 导航项 (图标, 文字, 页面索引)
         nav_items = [
             ("📊", "仪表盘", 0),
-            ("🏥", "系统诊断", 1),
-            ("🔍", "文件扫描", 2),
-            ("📁", "文件迁移", 3),
-            ("📦", "应用迁移", 4),
-            ("🗑️", "智能删除", 5),
-            ("💡", "智能推荐", 6),
-            ("📈", "磁盘监控", 7),
-            ("⚙️", "设置", 8),
+            ("🔍", "文件扫描", 1),
+            ("📁", "文件迁移", 2),
+            ("📦", "应用迁移", 3),
+            ("🗑️", "智能删除", 4),
+            ("💡", "智能推荐", 5),
+            ("📈", "磁盘监控", 6),
+            ("⚙️", "设置", 7),
         ]
 
         self.nav_buttons = []
@@ -277,10 +275,6 @@ class MainWindow(QMainWindow):
         dash_scroll.setWidget(self.dashboard_page)
         self.content_stack.addWidget(dash_scroll)
 
-        # 系统诊断页面
-        self.diagnosis_page = self._create_diagnosis_page()
-        self.content_stack.addWidget(self.diagnosis_page)
-
         # 文件扫描页面
         self.scan_page = self._create_scan_page()
         self.content_stack.addWidget(self.scan_page)
@@ -311,77 +305,6 @@ class MainWindow(QMainWindow):
 
         # 默认选中仪表盘
         self.nav_buttons[0].setChecked(True)
-
-    def _create_diagnosis_page(self) -> QWidget:
-        """创建系统诊断页面"""
-        page = QWidget()
-        layout = QVBoxLayout(page)
-        layout.setSpacing(20)
-        layout.setContentsMargins(20, 20, 20, 20)
-
-        # 标题
-        title_layout = QHBoxLayout()
-        title_label = QLabel("系统诊断")
-        title_label.setFont(QFont("Microsoft YaHei", 20, QFont.Weight.Bold))
-        title_layout.addWidget(title_label)
-
-        title_layout.addStretch()
-
-        # 诊断按钮
-        diagnosis_button = QPushButton("开始诊断")
-        diagnosis_button.setFont(QFont("Microsoft YaHei", 11))
-        diagnosis_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
-        """)
-        diagnosis_button.clicked.connect(self._start_diagnosis)
-        title_layout.addWidget(diagnosis_button)
-
-        layout.addLayout(title_layout)
-
-        # 健康分数
-        self.health_frame = QFrame()
-        self.health_frame.setFrameStyle(QFrame.Shape.StyledPanel)
-        self.health_frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border: 1px solid #E0E0E0;
-                border-radius: 10px;
-                padding: 20px;
-            }
-        """)
-        health_layout = QHBoxLayout(self.health_frame)
-
-        self.health_progress = CircularProgress(color="green")
-        self.health_progress.set(100, "系统健康", "等待诊断...")
-        health_layout.addWidget(self.health_progress)
-
-        # 问题列表
-        problems_layout = QVBoxLayout()
-        problems_title = QLabel("检测到的问题")
-        problems_title.setFont(QFont("Microsoft YaHei", 14, QFont.Weight.Bold))
-        problems_layout.addWidget(problems_title)
-
-        self.problems_table = QTableWidget()
-        self.problems_table.setColumnCount(4)
-        self.problems_table.setHorizontalHeaderLabels(["严重程度", "问题", "描述", "解决方案"])
-        self.problems_table.horizontalHeader().setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        self.problems_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.problems_table.setAlternatingRowColors(True)
-        problems_layout.addWidget(self.problems_table)
-
-        health_layout.addLayout(problems_layout)
-        layout.addWidget(self.health_frame)
-
-        return page
 
     def _create_scan_page(self) -> QWidget:
         """创建文件扫描页面"""
@@ -1358,65 +1281,6 @@ class MainWindow(QMainWindow):
             self.robot.show_speech(msg, duration=5000)
 
         self._start_scan()
-
-    def _start_diagnosis(self):
-        """开始诊断"""
-        self.statusBar().showMessage("正在诊断...")
-
-        self.diagnosis_thread = DiagnosisThread()
-        self.diagnosis_thread.finished.connect(self._on_diagnosis_finished)
-        self.diagnosis_thread.start()
-
-    def _on_diagnosis_finished(self, report):
-        """诊断完成"""
-        # 更新健康分数
-        self.health_progress.set(report.health_score, "系统健康", f"{report.health_score} 分")
-
-        # 更新问题表格
-        self.problems_table.setRowCount(len(report.problems))
-
-        for i, problem in enumerate(report.problems):
-            # 严重程度
-            severity_item = QTableWidgetItem(problem.severity.value.upper())
-            severity_item.setFlags(severity_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            # Color-code severity
-            severity_colors = {
-                "CRITICAL": QColor("#F44336"),
-                "HIGH": QColor("#FF5722"),
-                "MEDIUM": QColor("#FFC107"),
-                "LOW": QColor("#4CAF50"),
-            }
-            color = severity_colors.get(problem.severity.value.upper())
-            if color:
-                severity_item.setForeground(color)
-            self.problems_table.setItem(i, 0, severity_item)
-
-            # 问题标题
-            title_item = QTableWidgetItem(problem.title)
-            title_item.setFlags(title_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.problems_table.setItem(i, 1, title_item)
-
-            # 描述
-            desc_item = QTableWidgetItem(problem.description)
-            desc_item.setFlags(desc_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.problems_table.setItem(i, 2, desc_item)
-
-            # 解决方案
-            solution_item = QTableWidgetItem(problem.solution)
-            solution_item.setFlags(solution_item.flags() & ~Qt.ItemFlag.ItemIsEditable)
-            self.problems_table.setItem(i, 3, solution_item)
-
-        self.statusBar().showMessage(f"诊断完成 - 健康分数: {report.health_score}")
-
-        # Robot: show diagnosis result
-        if self.robot:
-            ctx = DialogContext(
-                health_score=report.health_score,
-                problem_count=len(report.problems),
-            )
-            msg, mood = self.dialog.on_diagnosis(ctx)
-            self.robot.set_state(mood.value)
-            self.robot.show_speech(msg, duration=6000)
 
     def _refresh_recommendations(self):
         """刷新推荐 - 使用后台线程"""
