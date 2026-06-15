@@ -245,54 +245,58 @@ class FileScanner:
         """快速分类 — 路径匹配 > 扩展名 > 大文件 > 跳过"""
         path_lower = file_info.path.lower()
         ext = file_info.extension
+        _set = self._set_info
 
-        # 1. 路径关键词匹配（最快，命中率最高）
+        # 1. 路径关键词匹配
         for kw in self.CLEAN_PATH_KEYWORDS:
             if kw in path_lower:
                 if "\\temp\\" in kw or "\\tmp\\" in kw:
-                    file_info.file_type, file_info.category = "temp", "safe"
+                    _set(file_info, "temp", "safe", "临时文件", "可以安全删除", "删除后不影响系统运行")
                 elif "cache" in kw or "thumbcache" in kw or "inetcache" in kw:
-                    file_info.file_type, file_info.category = "cache", "safe"
+                    _set(file_info, "cache", "safe", "缓存文件", "可以安全删除", "应用会自动重建缓存")
                 elif "log" in kw:
-                    file_info.file_type, file_info.category = "log", "safe"
+                    _set(file_info, "log", "safe", "日志文件", "可以安全删除", "仅用于调试，删除不影响功能")
                 elif "prefetch" in kw or "recent" in kw:
-                    file_info.file_type, file_info.category = "cache", "safe"
+                    _set(file_info, "cache", "safe", "系统缓存", "可以安全删除", "Windows 会自动重建")
                 elif "wer" in kw or "crashdumps" in kw:
-                    file_info.file_type, file_info.category = "crash", "safe"
+                    _set(file_info, "crash", "safe", "错误报告", "可以安全删除", "仅用于调试崩溃")
                 elif "softwaredistribution" in kw or "deliveryoptimization" in kw:
-                    file_info.file_type, file_info.category = "cache", "safe"
+                    _set(file_info, "cache", "safe", "更新缓存", "可以安全删除", "Windows 更新已完成")
                 elif "recycle" in kw:
-                    file_info.file_type, file_info.category = "cache", "safe"
+                    _set(file_info, "cache", "safe", "回收站", "确认后删除", "删除后无法恢复")
                 else:
-                    file_info.file_type, file_info.category = "temp", "safe"
+                    _set(file_info, "temp", "safe", "临时文件", "可以安全删除", "应用不再需要")
                 return
 
         # 2. 扩展名匹配
         if ext in self.SAFE_EXTENSIONS:
-            file_info.file_type = "safe_ext"
-            file_info.category = "safe"
+            _set(file_info, "safe_ext", "safe", f"{ext} 文件", "可以安全删除", "临时或日志文件")
             return
 
-        # 3. 系统文件跳过
+        # 3. 系统文件
         if file_info.is_system:
-            file_info.file_type = "system"
-            file_info.category = "skip"
+            _set(file_info, "system", "skip", "系统文件", "危险", "删除可能导致系统崩溃")
             return
 
-        # 4. 大文件提示
+        # 4. 大文件
         if file_info.size > 100 * 1024 * 1024:
-            file_info.file_type = "large"
-            file_info.category = "ask"
+            _set(file_info, "large", "ask", "大文件", "中风险", f"占用 {format_size(file_info.size)}，建议确认后处理")
             return
 
-        # 5. 旧文件提示
+        # 5. 旧文件
         if self._is_old_file(file_info):
-            file_info.file_type = "old"
-            file_info.category = "ask"
+            _set(file_info, "old", "ask", "旧文件", "低风险", "超过30天未使用")
             return
 
-        file_info.file_type = "unknown"
-        file_info.category = "skip"
+        _set(file_info, "unknown", "skip", "未知", "跳过", "未识别类型")
+
+    @staticmethod
+    def _set_info(f, ftype, cat, type_name, risk, impact):
+        f.file_type = ftype
+        f.category = cat
+        f.type_name = type_name
+        f.risk_level = risk
+        f.impact = impact
 
     def _is_old_file(self, file_info: FileInfo) -> bool:
         """检查是否旧文件（>30天未访问且 >1MB）"""

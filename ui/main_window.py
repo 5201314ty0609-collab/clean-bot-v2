@@ -401,6 +401,13 @@ class MainWindow(QMainWindow):
         self.files_table = QTableWidget()
         self.files_table.setColumnCount(7)
         self.files_table.setHorizontalHeaderLabels(["选择", "文件路径", "大小", "类型名称", "风险等级", "删除影响", "修改时间"])
+        self.files_table.setColumnWidth(0, 40)
+        self.files_table.setColumnWidth(2, 80)
+        self.files_table.setColumnWidth(3, 80)
+        self.files_table.setColumnWidth(4, 60)
+        self.files_table.setColumnWidth(5, 120)
+        self.files_table.setColumnWidth(6, 130)
+        self.files_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.files_table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         self.files_table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.files_table.setAlternatingRowColors(True)
@@ -1092,7 +1099,9 @@ class MainWindow(QMainWindow):
         if not self.scan_result:
             return
 
-        files = self.scan_result.temp_files + self.scan_result.cache_files + self.scan_result.log_files
+        # 显示安全 + 需确认的文件
+        files = (self.scan_result.temp_files + self.scan_result.cache_files +
+                 self.scan_result.log_files + self.scan_result.old_files)
 
         self.files_table.setRowCount(len(files))
 
