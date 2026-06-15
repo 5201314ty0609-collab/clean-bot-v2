@@ -15,111 +15,25 @@ from PyQt6.QtWidgets import (
     QLabel, QPushButton, QProgressBar, QTableWidget, QTableWidgetItem,
     QCheckBox, QGroupBox, QScrollArea, QFrame, QSplitter, QMessageBox,
     QFileDialog, QHeaderView, QAbstractItemView, QTabWidget, QStackedWidget,
-    QSizePolicy, QSpacerItem
+    QSizePolicy, QSpacerItem, QComboBox, QLineEdit, QTextEdit, QSpinBox
 )
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer, QSize
+from PyQt6.QtCore import Qt, QTimer, QSize
 from PyQt6.QtGui import QFont, QColor, QPalette, QIcon, QAction
 
 # 导入核心模块
-from core.diagnosis.system_diagnosis import SystemDiagnosis
 from core.monitor.disk_monitor import DiskMonitor, format_size
-from core.ai.recommendation import RecommendationEngine
-from core.scanner.file_scanner import FileScanner
-from core.cleaner.file_cleaner import FileCleaner
 
 # 导入自定义控件
 from ui.dashboard import DashboardView, CircularProgress, StatCard, RecommendationsWidget
 
+# 导入后台线程
+from ui.threads import (
+    ScanThread, CleanThread, DiagnosisThread,
+    MonitorThread, RecommendationThread,
+)
+
 # 导入对话系统
 from core.ai.dialog_system import DialogSystem, DialogContext, Mood
-
-
-class ScanThread(QThread):
-    """扫描线程"""
-    progress = pyqtSignal(int, int)
-    finished = pyqtSignal(object)
-
-    def __init__(self, root_path: str = None):
-        super().__init__()
-        from core.utils import get_system_drive
-        self.root_path = root_path or get_system_drive()
-
-    def run(self):
-        scanner = FileScanner(self.root_path)
-        result = scanner.scan(progress_callback=lambda c, s: self.progress.emit(c, s))
-        self.finished.emit(result)
-
-
-class CleanThread(QThread):
-    """清理线程"""
-    progress = pyqtSignal(int, int, str)
-    finished = pyqtSignal(object)
-
-    def __init__(self, files: list, use_trash: bool = True):
-        super().__init__()
-        self.files = files
-        self.use_trash = use_trash
-
-    def run(self):
-        cleaner = FileCleaner(use_trash=self.use_trash)
-        result = cleaner.clean(
-            self.files,
-            progress_callback=lambda prog: self.progress.emit(prog.current, prog.total, prog.current_file)
-        )
-        self.finished.emit(result)
-
-
-class DiagnosisThread(QThread):
-    """诊断线程"""
-    finished = pyqtSignal(object)
-
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        diagnosis = SystemDiagnosis()
-        report = diagnosis.run_full_diagnosis()
-        self.finished.emit(report)
-
-
-class MonitorThread(QThread):
-    """磁盘监控线程 - 避免 psutil 阻塞 UI"""
-    data_ready = pyqtSignal(dict)
-
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        import psutil
-        from core.utils import get_system_drive
-
-        data = {}
-        try:
-            system_drive = get_system_drive()
-            disk_usage = psutil.disk_usage(system_drive)
-            data["disk"] = {
-                "total": disk_usage.total,
-                "used": disk_usage.used,
-                "free": disk_usage.free,
-                "percent": disk_usage.percent,
-            }
-        except (PermissionError, OSError):
-            pass
-
-        self.data_ready.emit(data)
-
-
-class RecommendationThread(QThread):
-    """推荐生成线程 - 避免阻塞 UI"""
-    finished = pyqtSignal(list)
-
-    def __init__(self):
-        super().__init__()
-
-    def run(self):
-        engine = RecommendationEngine()
-        recommendations = engine.generate_recommendations()
-        self.finished.emit(recommendations)
 
 
 class MainWindow(QMainWindow):
@@ -1075,77 +989,8 @@ class MainWindow(QMainWindow):
 
     def _init_style(self):
         """初始化样式"""
-        self.setStyleSheet("""
-            QMainWindow {
-                background-color: #F8F9FA;
-            }
-            QGroupBox {
-                font-weight: bold;
-                border: 1px solid #DEE2E6;
-                border-radius: 8px;
-                margin-top: 12px;
-                padding-top: 16px;
-            }
-            QGroupBox::title {
-                subcontrol-origin: margin;
-                left: 12px;
-                padding: 0 6px;
-            }
-            QTableWidget {
-                border: 1px solid #DEE2E6;
-                border-radius: 8px;
-                background-color: white;
-                gridline-color: #F1F3F5;
-            }
-            QTableWidget::item {
-                padding: 6px;
-            }
-            QTableWidget::item:selected {
-                background-color: #E3F2FD;
-                color: #1565C0;
-            }
-            QHeaderView::section {
-                background-color: #F1F3F5;
-                border: none;
-                border-bottom: 2px solid #DEE2E6;
-                border-right: 1px solid #DEE2E6;
-                padding: 8px 10px;
-                font-weight: bold;
-                color: #495057;
-            }
-            QProgressBar {
-                border: 1px solid #DEE2E6;
-                border-radius: 6px;
-                text-align: center;
-                background-color: #E9ECEF;
-            }
-            QProgressBar::chunk {
-                background-color: #2196F3;
-                border-radius: 5px;
-            }
-            QPushButton {
-                border-radius: 6px;
-                padding: 8px 16px;
-                font-weight: 500;
-            }
-            QScrollBar:vertical {
-                border: none;
-                background: #F1F3F5;
-                width: 8px;
-                border-radius: 4px;
-            }
-            QScrollBar::handle:vertical {
-                background: #CED4DA;
-                border-radius: 4px;
-                min-height: 30px;
-            }
-            QScrollBar::handle:vertical:hover {
-                background: #ADB5BD;
-            }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-                height: 0;
-            }
-        """)
+        from ui.styles import MAIN_STYLESHEET
+        self.setStyleSheet(MAIN_STYLESHEET)
 
     def _init_timers(self):
         """初始化定时器"""

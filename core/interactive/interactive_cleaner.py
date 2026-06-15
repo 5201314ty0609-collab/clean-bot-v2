@@ -14,6 +14,8 @@ import time
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable
+
+from core.utils import format_size
 from datetime import datetime
 
 from core.deep_cleaner.deep_cleaner import DeepCleaner, CleanupTarget, CleanupResult
@@ -167,7 +169,7 @@ class InteractiveCleaner:
         lines.append(f"您要删除: {info.name}")
         lines.append("")
         lines.append(f"类型: {info.type_name}")
-        lines.append(f"大小: {self.format_size(info.size)}")
+        lines.append(f"大小: {format_size(info.size)}")
         lines.append(f"路径: {info.path}")
         lines.append("")
 
@@ -256,7 +258,7 @@ class InteractiveCleaner:
             "type": info.file_type,
             "type_name": info.type_name,
             "size": info.size,
-            "size_formatted": self.format_size(info.size),
+            "size_formatted": format_size(info.size),
             "extension": info.extension,
             "description": info.description,
             "risk_level": info.risk_level,
@@ -266,12 +268,3 @@ class InteractiveCleaner:
             "related_items": info.related_items,
             "related_count": len(info.related_items),
         }
-
-    @staticmethod
-    def format_size(size_bytes: int) -> str:
-        """格式化文件大小"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.2f} PB"

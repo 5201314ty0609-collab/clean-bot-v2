@@ -184,8 +184,9 @@ class SystemDiagnosis:
         """检测系统问题"""
         problems = []
 
-        # 检查系统文件完整性
-        if not self._check_system_files_integrity():
+        # 检查系统文件完整性（None = 无法检查，不报错）
+        integrity = self._check_system_files_integrity()
+        if integrity is False:
             problems.append(Problem(
                 id="sys_001",
                 title="系统文件可能损坏",
@@ -195,8 +196,9 @@ class SystemDiagnosis:
                 solution="运行系统文件检查器 (sfc /scannow) 修复系统文件",
             ))
 
-        # 检查 Windows 更新
-        if self._has_pending_updates():
+        # 检查 Windows 更新（None = 无法检查，不报错）
+        pending = self._has_pending_updates()
+        if pending is True:
             problems.append(Problem(
                 id="sys_002",
                 title="有待安装的 Windows 更新",
@@ -206,8 +208,9 @@ class SystemDiagnosis:
                 solution="安装 Windows 更新以保持系统安全",
             ))
 
-        # 检查系统还原点
-        if not self._has_restore_points():
+        # 检查系统还原点（None = 无法检查，不报错）
+        restore = self._has_restore_points()
+        if restore is False:
             problems.append(Problem(
                 id="sys_003",
                 title="没有系统还原点",
@@ -270,8 +273,9 @@ class SystemDiagnosis:
         """检测安全问题"""
         problems = []
 
-        # 检查 Windows Defender 状态
-        if not self._is_defender_enabled():
+        # 检查 Windows Defender 状态（None = 无法检查，不报错）
+        defender = self._is_defender_enabled()
+        if defender is False:
             problems.append(Problem(
                 id="sec_001",
                 title="Windows Defender 已禁用",
@@ -281,8 +285,9 @@ class SystemDiagnosis:
                 solution="启用 Windows Defender 以保护系统安全",
             ))
 
-        # 检查防火墙状态
-        if not self._is_firewall_enabled():
+        # 检查防火墙状态（None = 无法检查，不报错）
+        fw = self._is_firewall_enabled()
+        if fw is False:
             problems.append(Problem(
                 id="sec_002",
                 title="Windows 防火墙已禁用",
@@ -554,10 +559,9 @@ class SystemDiagnosis:
         return f"检测到 {total} 个问题：{', '.join(summary_parts)}。"
 
     # 辅助方法
-    def _check_system_files_integrity(self) -> bool:
-        """检查系统文件完整性"""
+    def _check_system_files_integrity(self) -> Optional[bool]:
+        """检查系统文件完整性。返回 None 表示无法检查。"""
         try:
-            # 运行 sfc 验证（不修复）
             result = subprocess.run(
                 ["sfc", "/verifyonly"],
                 capture_output=True,
@@ -565,64 +569,77 @@ class SystemDiagnosis:
                 timeout=300,
             )
             return result.returncode == 0
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return True  # 假设正常
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            return None  # 无法检查 — 不要假设正常
 
-    def _has_pending_updates(self) -> bool:
-        """检查是否有待安装的更新"""
+    def _has_pending_updates(self) -> Optional[bool]:
+        """检查是否有待安装的更新。返回 None 表示无法检查。"""
         try:
-            # 使用 PowerShell 检查更新
             result = subprocess.run(
-                ["powershell", "-Command", "Get-WindowsUpdate"],
+                ["powershell", "-Command",
+                 "(New-Object -ComObject Microsoft.Update.Session)"
+                 ".CreateUpdateSearcher().Search('IsInstalled=0').Updates.Count"],
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            if result.returncode == 0 and result.stdout.strip().isdigit():
+                return int(result.stdout.strip()) > 0
+            return None  # 无法解析输出
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            return None
+
+    def _has_restore_points(self) -> Optional[bool]:
+        """检查是否有系统还原点。返回 None 表示无法检查。"""
+        try:
+            result = subprocess.run(
+                ["powershell", "-Command",
+                 "(Get-ComputerRestorePoint | Measure-Object).Count"],
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
-            return "Available" in result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return False
+            if result.returncode == 0 and result.stdout.strip().isdigit():
+                return int(result.stdout.strip()) > 0
+            return None
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            return None
 
-    def _has_restore_points(self) -> bool:
-        """检查是否有系统还原点"""
+    def _is_defender_enabled(self) -> Optional[bool]:
+        """检查 Windows Defender 是否启用。返回 None 表示无法检查。"""
         try:
-            # 使用 PowerShell 检查还原点
             result = subprocess.run(
-                ["powershell", "-Command", "Get-ComputerRestorePoint"],
+                ["powershell", "-Command",
+                 "Get-MpComputerStatus | Select-Object -ExpandProperty "
+                 "RealTimeProtectionEnabled"],
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
-            return "RestorePoint" in result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return True  # 假设有
+            if "True" in result.stdout:
+                return True
+            if "False" in result.stdout:
+                return False
+            return None
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            return None
 
-    def _is_defender_enabled(self) -> bool:
-        """检查 Windows Defender 是否启用"""
+    def _is_firewall_enabled(self) -> Optional[bool]:
+        """检查防火墙是否启用。返回 None 表示无法检查。"""
         try:
-            # 使用 PowerShell 检查 Defender 状态
-            result = subprocess.run(
-                ["powershell", "-Command", "Get-MpComputerStatus | Select-Object -ExpandProperty RealTimeProtectionEnabled"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
-            return "True" in result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return True  # 假设启用
-
-    def _is_firewall_enabled(self) -> bool:
-        """检查防火墙是否启用"""
-        try:
-            # 使用 netsh 检查防火墙状态
             result = subprocess.run(
                 ["netsh", "advfirewall", "show", "allprofiles", "state"],
                 capture_output=True,
                 text=True,
                 timeout=60,
             )
-            return "ON" in result.stdout
-        except (subprocess.TimeoutExpired, FileNotFoundError):
-            return True  # 假设启用
+            if "ON" in result.stdout:
+                return True
+            if "OFF" in result.stdout:
+                return False
+            return None
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            return None
 
     def _is_uac_enabled(self) -> bool:
         """检查 UAC 是否启用"""

@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable
 from datetime import datetime
 
+from core.utils import format_size
+
 
 @dataclass
 class CleanupTarget:
@@ -277,7 +279,7 @@ class DeepCleaner:
         desc_parts = []
 
         desc_parts.append(f"类型: {'文件夹' if target.target_type == 'folder' else '文件'}")
-        desc_parts.append(f"大小: {self.format_size(target.size)}")
+        desc_parts.append(f"大小: {format_size(target.size)}")
 
         if target.registry_entries:
             desc_parts.append(f"注册表项: {len(target.registry_entries)} 个")
@@ -455,12 +457,3 @@ class DeepCleaner:
 
         with open(log_path, "w", encoding="utf-8") as f:
             json.dump(self.cleanup_log, f, indent=2, ensure_ascii=False)
-
-    @staticmethod
-    def format_size(size_bytes: int) -> str:
-        """格式化文件大小"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.2f} PB"

@@ -15,6 +15,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from collections import defaultdict
 
+from core.utils import format_size
+
 
 @dataclass
 class UserProfile:
@@ -196,7 +198,7 @@ class RecommendationEngine:
                 recommendations.append(Recommendation(
                     id=f"app_cache_{app_name}",
                     title=f"清理 {app_name} 缓存",
-                    description=f"{app_name} 缓存占用 {self._format_size(cache_size)}",
+                    description=f"{app_name} 缓存占用 {format_size(cache_size)}",
                     category="cleanup",
                     priority=6,
                     risk_level="low",
@@ -310,13 +312,6 @@ class RecommendationEngine:
 
         return cache_sizes
 
-    def _format_size(self, size_bytes: int) -> str:
-        """格式化文件大小"""
-        for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-            if size_bytes < 1024.0:
-                return f"{size_bytes:.2f} {unit}"
-            size_bytes /= 1024.0
-        return f"{size_bytes:.2f} PB"
 
     def accept_recommendation(self, recommendation_id: str):
         """接受推荐"""
@@ -415,7 +410,7 @@ def main():
         print(f"   优先级: {rec.priority}/10")
         print(f"   风险: {rec.risk_level}")
         if rec.estimated_savings > 0:
-            print(f"   预计节省: {engine._format_size(rec.estimated_savings)}")
+            print(f"   预计节省: {format_size(rec.estimated_savings)}")
 
     print("\n" + "=" * 60)
 

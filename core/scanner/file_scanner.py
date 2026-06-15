@@ -66,26 +66,8 @@ class FileScanner:
         ".thumbs.db", ".ds_store",
     }
 
-    # 临时文件路径模式
-    TEMP_PATHS = [
-        "C:\\Windows\\Temp",
-        "C:\\Users\\*\\AppData\\Local\\Temp",
-        "C:\\Users\\*\\AppData\\Local\\Microsoft\\Windows\\INetCache",
-    ]
-
-    # 缓存路径模式
-    CACHE_PATHS = [
-        "C:\\Users\\*\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\Cache",
-        "C:\\Users\\*\\AppData\\Local\\Mozilla\\Firefox\\Profiles\\*.default-release\\cache2",
-        "C:\\Users\\*\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\Cache",
-        "C:\\Users\\*\\AppData\\Local\\Microsoft\\Windows\\Explorer\\thumbcache_*.db",
-    ]
-
-    # 日志路径模式
-    LOG_PATHS = [
-        "C:\\Windows\\Logs",
-        "C:\\Users\\*\\AppData\\Local\\Temp",
-    ]
+    # 文件分类通过 _is_temp_file / _is_cache_file / _is_log_file 方法实现
+    # 路径模式由 SmartAnalyzer 统一管理，避免硬编码
 
     # 绝对不扫描的路径
     EXCLUDE_PATHS = [

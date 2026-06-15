@@ -3,9 +3,10 @@ CleanBot v2.0 — 工具函数
 """
 
 import os
+import shutil
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import List, Optional
 
 
 def format_size(size_bytes: int) -> str:
@@ -18,11 +19,12 @@ def format_size(size_bytes: int) -> str:
     Returns:
         格式化后的字符串，例如 "1.23 GB"
     """
+    size = float(size_bytes)
     for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.2f} PB"
+        if size < 1024.0:
+            return f"{size:.2f} {unit}"
+        size /= 1024.0
+    return f"{size:.2f} PB"
 
 
 def get_system_drive() -> str:
@@ -193,15 +195,86 @@ def is_admin() -> bool:
         return False
 
 
-def run_as_admin():
-    """
-    请求管理员权限重新运行
-    """
+def run_as_admin() -> None:
+    """请求管理员权限重新运行（Windows 下会提权后重启，当前进程退出）。"""
     if sys.platform != "win32":
         return
 
     import ctypes
-    ctypes.windll.shell32.ShellExecuteW(
+    result = ctypes.windll.shell32.ShellExecuteW(
         None, "runas", sys.executable, " ".join(sys.argv), None, 1
     )
-    sys.exit(0)
+    # ShellExecuteW returns >32 on success, <=32 on error
+    if result > 32:
+        sys.exit(0)
+    print(f"⚠️  提权失败 (错误码: {result})")
+
+
+def get_available_drives() -> List[str]:
+    """获取可用的磁盘盘符"""
+    import string
+
+    if sys.platform != "win32":
+        return ["/"]
+
+    drives = []
+    for letter in string.ascii_uppercase:
+        drive = f"{letter}:\\"
+        if os.path.exists(drive):
+            drives.append(drive)
+    return drives
+
+
+def get_drive_free_space(drive: str) -> int:
+    """获取磁盘剩余空间（字节）"""
+    try:
+        total, used, free = shutil.disk_usage(drive)
+        return free
+    except OSError:
+        return 0
+
+
+def get_drive_total_space(drive: str) -> int:
+    """获取磁盘总空间（字节）"""
+    try:
+        total, used, free = shutil.disk_usage(drive)
+        return total
+    except OSError:
+        return 0
+
+
+def check_symlink_support() -> bool:
+    """检查系统是否支持符号链接"""
+    if sys.platform != "win32":
+        return True
+
+    # Windows 需要管理员权限或开发者模式
+    try:
+        test_link = os.path.join(get_temp_dir(), "cleanbot_test_link")
+        test_target = os.path.join(get_temp_dir(), "cleanbot_test_target")
+
+        # 创建测试文件
+        with open(test_target, "w") as f:
+            f.write("test")
+
+        # 尝试创建符号链接
+        os.symlink(test_target, test_link)
+
+        # 清理
+        os.remove(test_link)
+        os.remove(test_target)
+
+        return True
+    except OSError:
+        return False
+
+
+def ensure_admin_or_exit() -> None:
+    """确保有管理员权限，否则尝试提权后退出。"""
+    if not is_admin():
+        print("⚠️  此操作需要管理员权限")
+        print("   正在请求管理员权限...")
+        run_as_admin()
+        # 如果 run_as_admin 返回（用户拒绝 UAC 或 ShellExecuteW 失败），
+        # 必须退出以防止调用方在无管理员权限下继续执行。
+        sys.exit(1)

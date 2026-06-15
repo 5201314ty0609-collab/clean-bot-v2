@@ -17,6 +17,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable
 from datetime import datetime
 
+from core.utils import format_size
+
 # Windows 特定
 if sys.platform == "win32":
     try:
@@ -326,8 +328,6 @@ class FileCleaner:
 
         return log_path
 
-
-from core.utils import format_size
 
 
 def main():

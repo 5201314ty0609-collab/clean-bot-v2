@@ -16,6 +16,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Callable
 from datetime import datetime
 
+from core.utils import format_size
+
 
 @dataclass
 class AppInfo:
@@ -254,12 +256,3 @@ class AppMigrator:
     def get_apps_by_size(self, min_size: int = 0) -> List[AppInfo]:
         """按大小获取应用"""
         return [app for app in self.installed_apps if app.size >= min_size]
-
-
-def format_size(size_bytes: int) -> str:
-    """格式化文件大小"""
-    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
-        if size_bytes < 1024.0:
-            return f"{size_bytes:.2f} {unit}"
-        size_bytes /= 1024.0
-    return f"{size_bytes:.2f} PB"
