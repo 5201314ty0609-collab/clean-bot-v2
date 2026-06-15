@@ -72,8 +72,10 @@ class MainWindow(QMainWindow):
         # 初始化定时器
         self._init_timers()
 
-        # 启动时静默检查更新（延迟3秒，避免阻塞窗口显示）
+        # 启动时静默检查更新（延迟3秒）
         QTimer.singleShot(3000, self.check_update_on_startup)
+        # 启动时检查定时清理
+        QTimer.singleShot(5000, self._check_scheduled_clean)
 
         # Show greeting if robot is available
         if self.robot:
@@ -951,6 +953,44 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(monitor_group)
 
+        # 定时清理设置
+        schedule_group = QGroupBox("定时自动清理")
+        schedule_layout = QVBoxLayout(schedule_group)
+
+        self.schedule_checkbox = QCheckBox("启用定时自动清理")
+        self.schedule_checkbox.setFont(QFont("Microsoft YaHei", 11))
+        self.schedule_checkbox.setChecked(False)
+        schedule_layout.addWidget(self.schedule_checkbox)
+
+        interval_layout = QHBoxLayout()
+        interval_label = QLabel("清理频率:")
+        interval_label.setFont(QFont("Microsoft YaHei", 11))
+        interval_layout.addWidget(interval_label)
+        self.schedule_combo = QComboBox()
+        self.schedule_combo.addItems(["每天", "每周", "每月"])
+        self.schedule_combo.setCurrentIndex(1)
+        self.schedule_combo.setFont(QFont("Microsoft YaHei", 11))
+        self.schedule_combo.setMinimumWidth(100)
+        interval_layout.addWidget(self.schedule_combo)
+        interval_layout.addStretch()
+        schedule_layout.addLayout(interval_layout)
+
+        self.schedule_auto_clean = QCheckBox("自动清理安全文件（无需确认）")
+        self.schedule_auto_clean.setFont(QFont("Microsoft YaHei", 11))
+        self.schedule_auto_clean.setChecked(True)
+        schedule_layout.addWidget(self.schedule_auto_clean)
+
+        save_schedule = QPushButton("保存定时设置")
+        save_schedule.setStyleSheet("""
+            QPushButton { background: #2563eb; color: white; border: none;
+                          border-radius: 6px; padding: 8px 16px; }
+            QPushButton:hover { background: #1d4ed8; }
+        """)
+        save_schedule.clicked.connect(self._save_schedule_settings)
+        schedule_layout.addWidget(save_schedule)
+
+        layout.addWidget(schedule_group)
+
         # 更新设置
         update_group = QGroupBox("软件更新")
         update_layout = QVBoxLayout(update_group)
@@ -1314,6 +1354,18 @@ class MainWindow(QMainWindow):
         """推荐生成完成"""
         self.recommendations_widget.update_recommendations(recommendations)
         self.statusBar().showMessage(f"已生成 {len(recommendations)} 个推荐")
+
+    def _save_schedule_settings(self):
+        """保存定时清理设置"""
+        from core.scheduler import ScheduleConfig, save_config
+        interval_map = {"每天": "daily", "每周": "weekly", "每月": "monthly"}
+        cfg = ScheduleConfig(
+            enabled=self.schedule_checkbox.isChecked(),
+            interval=interval_map.get(self.schedule_combo.currentText(), "weekly"),
+            auto_clean=self.schedule_auto_clean.isChecked(),
+        )
+        save_config(cfg)
+        self.statusBar().showMessage("定时清理设置已保存")
 
     def _on_rec_cleanup(self, rec):
         """点击推荐卡片的一键清理"""
@@ -1798,12 +1850,39 @@ class MainWindow(QMainWindow):
         if update_info and update_info.is_newer:
             show_update_dialog(update_info, self)
 
+    def _check_scheduled_clean(self):
+        """检查是否需要执行定时清理"""
+        from core.scheduler import should_run, mark_completed, load_config
+        cfg = load_config()
+        if not cfg.enabled:
+            return
+        if should_run():
+            self.statusBar().showMessage("正在执行定时自动清理...")
+            # 扫描安全文件并自动清理
+            self._start_scan()
+            # 延迟清理（等扫描完成）
+            QTimer.singleShot(15000, self._auto_clean_if_ready)
+
+    def _auto_clean_if_ready(self):
+        """定时清理：自动清理安全文件"""
+        from core.scheduler import mark_completed
+        if self.scan_result:
+            safe_files = [f for f in (
+                self.scan_result.temp_files + self.scan_result.cache_files +
+                self.scan_result.log_files
+            ) if f.category == "safe"]
+            if safe_files:
+                self.files_to_clean = safe_files
+                self._start_clean()
+        mark_completed()
+        self.statusBar().showMessage("定时清理完成")
+
 
 def main():
     """GUI 入口"""
     app = QApplication(sys.argv)
     app.setApplicationName("CleanBot")
-    app.setApplicationVersion("2.1.0")
+    app.setApplicationVersion("3.0.0")
     app.setOrganizationName("PHOENIX")
 
     # 应用级图标（内嵌，无需文件）

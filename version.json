@@ -1,6 +1,6 @@
 {
-  "version": "2.1.0",
-  "download_url": "https://gitee.com/holyty/clean-bot-v2/releases/download/v2.1.0/CleanBot-Setup.exe",
-  "release_notes": "CleanBot v2.1.0 正式版\n\n功能:\n- 智能文件扫描 (SHA-256 去重)\n- 安全清理 (回收站模式，白名单保护)\n- 系统诊断 (注册表/服务/启动项/安全检测)\n- 桌面机器人 (卡通形象，语音反馈)\n- 文件迁移 (符号链接保持路径)\n- 应用迁移 (保留注册表路径)\n- 磁盘实时监控\n- 智能推荐引擎\n- 国内网络更新检测\n\n优化:\n- 消除5处代码重复\n- 修复诊断假阳性\n- 安全加固 (提权检查/JSON容错)",
+  "version": "3.0.0",
+  "download_url": "https://gitee.com/holyty/clean-bot-v2/releases/download/v3.0.0/CleanBot-Setup.exe",
+  "release_notes": "CleanBot v3.0.0 正式版\n\n功能:\n- 智能文件扫描 (SHA-256 去重)\n- 安全清理 (回收站模式，白名单保护)\n- 系统诊断 (注册表/服务/启动项/安全检测)\n- 桌面机器人 (卡通形象，语音反馈)\n- 文件迁移 (符号链接保持路径)\n- 应用迁移 (保留注册表路径)\n- 磁盘实时监控\n- 智能推荐引擎\n- 国内网络更新检测\n\n优化:\n- 消除5处代码重复\n- 修复诊断假阳性\n- 安全加固 (提权检查/JSON容错)",
   "release_date": "2026-06-15"
 }

@@ -1,0 +1,123 @@
+{
+  "version": "3.0.0",
+  "description": "CleanBot 可扩展清理规则 — 用户可以添加自定义清理路径和文件类型",
+  "rules": [
+    {
+      "id": "windows_temp",
+      "name": "Windows 临时文件",
+      "category": "temp",
+      "paths": ["%SystemRoot%\\Temp", "%TEMP%"],
+      "extensions": [".tmp", ".temp"],
+      "safe": true
+    },
+    {
+      "id": "windows_logs",
+      "name": "Windows 日志",
+      "category": "log",
+      "paths": ["%SystemRoot%\\Logs"],
+      "extensions": [".log", ".etl", ".evtx"],
+      "safe": true
+    },
+    {
+      "id": "windows_prefetch",
+      "name": "预读取缓存",
+      "category": "cache",
+      "paths": ["%SystemRoot%\\Prefetch"],
+      "extensions": [".pf"],
+      "safe": true
+    },
+    {
+      "id": "windows_update_cache",
+      "name": "Windows 更新缓存",
+      "category": "cache",
+      "paths": ["%SystemRoot%\\SoftwareDistribution\\Download"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "chrome_cache",
+      "name": "Chrome 浏览器缓存",
+      "category": "browser",
+      "paths": ["%LOCALAPPDATA%\\Google\\Chrome\\User Data\\*\\Cache"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "edge_cache",
+      "name": "Edge 浏览器缓存",
+      "category": "browser",
+      "paths": ["%LOCALAPPDATA%\\Microsoft\\Edge\\User Data\\*\\Cache"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "firefox_cache",
+      "name": "Firefox 浏览器缓存",
+      "category": "browser",
+      "paths": ["%APPDATA%\\Mozilla\\Firefox\\Profiles\\*\\cache2"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "crash_dumps",
+      "name": "崩溃转储文件",
+      "category": "crash",
+      "paths": ["%LOCALAPPDATA%\\CrashDumps"],
+      "extensions": [".dmp", ".hdmp", ".mdmp"],
+      "safe": true
+    },
+    {
+      "id": "wer_reports",
+      "name": "Windows 错误报告",
+      "category": "crash",
+      "paths": ["%LOCALAPPDATA%\\Microsoft\\Windows\\WER"],
+      "extensions": [".wer"],
+      "safe": true
+    },
+    {
+      "id": "recycle_bin",
+      "name": "回收站",
+      "category": "cache",
+      "paths": ["C:\\$Recycle.Bin"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "delivery_optimization",
+      "name": "传递优化文件",
+      "category": "cache",
+      "paths": ["%SystemRoot%\\DeliveryOptimization"],
+      "extensions": [],
+      "safe": true
+    },
+    {
+      "id": "user_temp",
+      "name": "用户临时文件",
+      "category": "temp",
+      "paths": ["%USERPROFILE%\\AppData\\Local\\Temp"],
+      "extensions": [".tmp", ".temp", ".log"],
+      "safe": true
+    },
+    {
+      "id": "thumbnails",
+      "name": "缩略图缓存",
+      "category": "cache",
+      "paths": ["%LOCALAPPDATA%\\Microsoft\\Windows\\Explorer"],
+      "extensions": [".db"],
+      "safe": true
+    }
+  ],
+  "never_delete": {
+    "description": "这些文件类型永远不会被清理",
+    "extensions": [
+      ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+      ".pdf", ".txt", ".rtf",
+      ".jpg", ".jpeg", ".png", ".gif", ".bmp",
+      ".mp3", ".mp4", ".avi", ".mkv", ".mov",
+      ".py", ".js", ".ts", ".java", ".cpp", ".c", ".go",
+      ".zip", ".rar", ".7z",
+      ".db", ".sqlite", ".mdb",
+      ".exe", ".dll", ".sys", ".msi"
+    ]
+  }
+}

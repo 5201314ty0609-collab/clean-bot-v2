@@ -114,9 +114,13 @@ class FileScanner:
             os.path.join(_local, 'Microsoft', 'Windows', 'Explorer'),
             os.path.join(_local, 'Microsoft', 'Windows', 'WER'),
             os.path.join(_local, 'Microsoft', 'Windows', 'Caches'),
+            # 浏览器缓存（Chrome/Edge 多Profile）
             os.path.join(_local, 'Google', 'Chrome', 'User Data', 'Default', 'Cache'),
             os.path.join(_local, 'Google', 'Chrome', 'User Data', 'Default', 'Code Cache'),
+            os.path.join(_local, 'Google', 'Chrome', 'User Data', 'Default', 'Service Worker'),
             os.path.join(_local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Cache'),
+            os.path.join(_local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Code Cache'),
+            os.path.join(_local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Service Worker'),
             os.path.join(_windir, 'Prefetch'),
             os.path.join(_windir, 'Logs'),
             os.path.join(_windir, 'SoftwareDistribution', 'Download'),

@@ -17,7 +17,7 @@ from urllib.request import urlopen, Request
 from urllib.error import URLError
 
 # 当前版本 (与 core/__init__.py 保持同步)
-CURRENT_VERSION = "2.1.0"
+CURRENT_VERSION = "3.0.0"
 
 # ── 更新源（按优先级排列，国内网络可达） ──
 # 发布新版本时，至少更新 Gitee 和 version.json 两个源即可覆盖全部用户。
