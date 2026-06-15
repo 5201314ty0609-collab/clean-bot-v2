@@ -356,12 +356,8 @@ class MainWindow(QMainWindow):
         """)
         health_layout = QHBoxLayout(self.health_frame)
 
-        self.health_progress = CircularProgress(
-            value=100,
-            title="系统健康",
-            subtitle="100 分",
-            color="#4CAF50",
-        )
+        self.health_progress = CircularProgress(color="green")
+        self.health_progress.set(100, "系统健康", "等待诊断...")
         health_layout.addWidget(self.health_progress)
 
         # 问题列表
@@ -606,13 +602,9 @@ class MainWindow(QMainWindow):
         # 磁盘使用情况
         disk_layout = QHBoxLayout()
 
-        self.disk_progress = CircularProgress(
-            value=0,
-            title="C 盘使用率",
-            subtitle="0 GB / 0 GB",
-            color="#FF6B6B",
-        )
-        disk_layout.addWidget(self.disk_progress)
+        self.monitor_disk_gauge = CircularProgress(color="red")
+        self.monitor_disk_gauge.set(0, "C 盘", "--")
+        disk_layout.addWidget(self.monitor_disk_gauge)
 
         # 磁盘信息
         disk_info_layout = QVBoxLayout()
@@ -1374,8 +1366,7 @@ class MainWindow(QMainWindow):
     def _on_diagnosis_finished(self, report):
         """诊断完成"""
         # 更新健康分数
-        self.health_progress.set_value(report.health_score)
-        self.health_progress.subtitle = f"{report.health_score} 分"
+        self.health_progress.set(report.health_score, "系统健康", f"{report.health_score} 分")
 
         # 更新问题表格
         self.problems_table.setRowCount(len(report.problems))
@@ -1456,8 +1447,10 @@ class MainWindow(QMainWindow):
         """监控数据就绪"""
         if "disk" in data:
             disk = data["disk"]
-            self.disk_progress.set_value(disk["percent"])
-            self.disk_progress.subtitle = f"{format_size(disk['used'])} / {format_size(disk['total'])}"
+            self.monitor_disk_gauge.set(
+                disk["percent"], "C 盘",
+                f"{format_size(disk['used'])} / {format_size(disk['total'])}"
+            )
 
             self.disk_total_label.setText(f"总容量: {format_size(disk['total'])}")
             self.disk_used_label.setText(f"已使用: {format_size(disk['used'])}")
