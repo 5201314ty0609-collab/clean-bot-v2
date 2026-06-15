@@ -195,19 +195,25 @@ def is_admin() -> bool:
         return False
 
 
-def run_as_admin() -> None:
-    """请求管理员权限重新运行（Windows 下会提权后重启，当前进程退出）。"""
+def run_as_admin() -> bool:
+    """以管理员权限重新启动当前程序。
+
+    PyInstaller EXE 兼容：使用 ShellExecuteW 提权重启自身。
+    返回 True 表示提权请求已发出（当前进程随即退出）。
+    """
     if sys.platform != "win32":
-        return
+        return False
 
     import ctypes
+    # 构建完整命令行（EXE 路径 + 所有参数）
+    exe_path = sys.executable
+    args = " ".join(f'"{a}"' if " " in a else a for a in sys.argv[1:])
     result = ctypes.windll.shell32.ShellExecuteW(
-        None, "runas", sys.executable, " ".join(sys.argv), None, 1
+        None, "runas", exe_path, args, None, 1  # SW_SHOWNORMAL
     )
-    # ShellExecuteW returns >32 on success, <=32 on error
     if result > 32:
         sys.exit(0)
-    print(f"⚠️  提权失败 (错误码: {result})")
+    return False
 
 
 def get_available_drives() -> List[str]:

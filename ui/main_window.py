@@ -143,6 +143,15 @@ class MainWindow(QMainWindow):
 
         layout.addStretch()
 
+        # 管理员状态标识
+        from core.utils import is_admin
+        admin_text = "🔒 管理员模式" if is_admin() else "🔓 普通模式（迁移功能需管理员权限）"
+        admin_color = "#4CAF50" if is_admin() else "#FFC107"
+        admin_label = QLabel(admin_text)
+        admin_label.setFont(QFont("Microsoft YaHei", 9))
+        admin_label.setStyleSheet(f"color: {admin_color}; padding: 2px 10px;")
+        layout.addWidget(admin_label)
+
         # 扫描按钮
         self.scan_button = QPushButton("开始扫描")
         self.scan_button.setFont(QFont("Microsoft YaHei", 11))
@@ -1493,6 +1502,18 @@ class MainWindow(QMainWindow):
 
     def _start_migrate(self):
         """开始文件迁移"""
+        from core.utils import is_admin, run_as_admin
+
+        if not is_admin():
+            reply = QMessageBox.question(
+                self, "需要管理员权限",
+                "文件迁移需要管理员权限才能创建符号链接。\n\n是否以管理员身份重新启动 CleanBot？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                run_as_admin()
+            return
+
         from core.migrator.file_migrator import FileMigrator
 
         # 获取选中的文件
@@ -1607,6 +1628,18 @@ class MainWindow(QMainWindow):
 
     def _start_app_migrate(self):
         """开始应用迁移"""
+        from core.utils import is_admin, run_as_admin
+
+        if not is_admin():
+            reply = QMessageBox.question(
+                self, "需要管理员权限",
+                "应用迁移需要管理员权限。\n\n是否以管理员身份重新启动 CleanBot？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                run_as_admin()
+            return
+
         from core.migrator.app_migrator import AppMigrator, AppInfo
 
         # 获取选中的应用
