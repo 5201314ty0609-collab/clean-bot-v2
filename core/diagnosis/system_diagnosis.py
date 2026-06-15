@@ -94,41 +94,16 @@ class SystemDiagnosis:
         self.system_info: Dict = {}
 
     def run_full_diagnosis(self) -> DiagnosisReport:
-        """运行完整诊断（subprocess 检测并行执行以加速）。"""
-        from concurrent.futures import ThreadPoolExecutor, as_completed
-
+        """运行完整诊断（仅使用 psutil，无外部命令调用）。"""
         start_time = time.time()
 
         # 收集系统信息
         self.system_info = self._collect_system_info()
 
-        # ── 慢速检测并行执行 ──
-        slow_results = {}
-        slow_checks = {
-            "integrity": self._check_system_files_integrity,
-            "updates": self._has_pending_updates,
-            "restore": self._has_restore_points,
-            "defender": self._is_defender_enabled,
-            "firewall": self._is_firewall_enabled,
-        }
-        with ThreadPoolExecutor(max_workers=4) as ex:
-            futures = {ex.submit(fn): name for name, fn in slow_checks.items()}
-            for future in as_completed(futures, timeout=30):
-                name = futures[future]
-                try:
-                    slow_results[name] = future.result(timeout=5)
-                except Exception:
-                    slow_results[name] = None
-
-        # ── 检测问题 ──
+        # 仅运行 psutil 检测，不使用任何 subprocess
         self.problems = []
-        self.problems.extend(self._detect_system_problems(slow_results))
         self.problems.extend(self._detect_performance_problems())
-        self.problems.extend(self._detect_security_problems(slow_results))
-        self.problems.extend(self._detect_disk_problems(slow_results))
-        self.problems.extend(self._detect_registry_problems())
-        self.problems.extend(self._detect_service_problems())
-        self.problems.extend(self._detect_startup_problems())
+        self.problems.extend(self._detect_disk_problems_basic())
 
         # 生成解决方案
         self.solutions = self._generate_solutions()
@@ -360,6 +335,32 @@ class SystemDiagnosis:
                     details={"disk": disk["device"]},
                 ))
 
+        return problems
+
+    def _detect_disk_problems_basic(self) -> List[Problem]:
+        """检测磁盘问题（仅 psutil，无外部命令）"""
+        problems = []
+        for disk in self.system_info.get("disks", []):
+            if disk["percent"] > 90:
+                problems.append(Problem(
+                    id=f"disk_full_{disk['device']}",
+                    title=f"磁盘 {disk['device']} 空间不足",
+                    description=f"磁盘 {disk['device']} 已使用 {disk['percent']}%，建议清理",
+                    severity=ProblemSeverity.HIGH,
+                    category=ProblemCategory.DISK,
+                    solution=f"清理磁盘 {disk['device']} 或使用文件迁移功能",
+                    details={"disk": disk["device"], "percent": disk["percent"]},
+                ))
+            elif disk["percent"] > 80:
+                problems.append(Problem(
+                    id=f"disk_warn_{disk['device']}",
+                    title=f"磁盘 {disk['device']} 空间偏低",
+                    description=f"磁盘 {disk['device']} 已使用 {disk['percent']}%，建议关注",
+                    severity=ProblemSeverity.MEDIUM,
+                    category=ProblemCategory.DISK,
+                    solution=f"关注磁盘 {disk['device']} 空间使用",
+                    details={"disk": disk["device"], "percent": disk["percent"]},
+                ))
         return problems
 
     def _detect_registry_problems(self) -> List[Problem]:

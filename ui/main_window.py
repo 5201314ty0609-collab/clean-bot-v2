@@ -270,8 +270,12 @@ class MainWindow(QMainWindow):
     def _create_pages(self):
         """创建各个页面"""
         # 仪表盘页面
+        dash_scroll = QScrollArea()
+        dash_scroll.setWidgetResizable(True)
+        dash_scroll.setStyleSheet("QScrollArea { border: none; background: #f0f2f5; }")
         self.dashboard_page = DashboardView()
-        self.content_stack.addWidget(self.dashboard_page)
+        dash_scroll.setWidget(self.dashboard_page)
+        self.content_stack.addWidget(dash_scroll)
 
         # 系统诊断页面
         self.diagnosis_page = self._create_diagnosis_page()

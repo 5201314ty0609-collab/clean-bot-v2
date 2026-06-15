@@ -59,67 +59,54 @@ class RecsRefreshThread(QThread):
 
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 环形进度条
+# 简单可靠的状态条
 # ═══════════════════════════════════════════════════════════════════════════
 
 class RingGauge(QWidget):
-    """现代环形仪表"""
+    """用标准 ProgressBar 替代自定义绘制，100% 可靠渲染。"""
 
-    _colors = {
-        "green":  QColor("#22c55e"),
-        "blue":   QColor("#3b82f6"),
-        "yellow": QColor("#eab308"),
-        "red":    QColor("#ef4444"),
-        "purple": QColor("#8b5cf6"),
+    _bar_colors = {
+        "green":  "QProgressBar::chunk { background: #22c55e; border-radius: 4px; }",
+        "blue":   "QProgressBar::chunk { background: #3b82f6; border-radius: 4px; }",
+        "yellow": "QProgressBar::chunk { background: #eab308; border-radius: 4px; }",
+        "red":    "QProgressBar::chunk { background: #ef4444; border-radius: 4px; }",
+        "purple": "QProgressBar::chunk { background: #8b5cf6; border-radius: 4px; }",
     }
 
     def __init__(self, color="blue"):
         super().__init__()
-        self.value = 0
-        self.label = ""
-        self.detail = ""
-        self._color_key = color
-        self.setFixedSize(150, 150)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(4, 4, 4, 4)
+        layout.setSpacing(4)
+        self.setMinimumWidth(120)
+
+        self._label = QLabel("--")
+        self._label.setFont(QFont("Microsoft YaHei", 10, QFont.Weight.Bold))
+        self._label.setStyleSheet("color: #0f172a; border: none;")
+        self._label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._label)
+
+        self._bar = QProgressBar()
+        self._bar.setFixedHeight(14)
+        self._bar.setTextVisible(False)
+        self._bar.setStyleSheet(f"""
+            QProgressBar {{
+                background: #e2e8f0; border: none; border-radius: 7px;
+            }}
+            {self._bar_colors.get(color, self._bar_colors['blue'])}
+        """)
+        layout.addWidget(self._bar)
+
+        self._detail = QLabel("--")
+        self._detail.setFont(QFont("Microsoft YaHei", 8))
+        self._detail.setStyleSheet("color: #94a3b8; border: none;")
+        self._detail.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._detail)
 
     def set(self, value: float, label: str, detail: str):
-        self.value = min(100, max(0, value))
-        self.label = label
-        self.detail = detail
-        self.update()
-
-    def paintEvent(self, event):
-        p = QPainter(self)
-        p.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        w, h = self.width(), self.height()
-        cx, cy = w / 2, h / 2
-        r = min(w, h) / 2 - 12
-
-        # 背景环
-        p.setPen(QPen(QColor("#e2e8f0"), 10, Qt.PenStyle.SolidLine))
-        p.drawEllipse(int(cx - r), int(cy - r), int(r * 2), int(r * 2))
-
-        # 进度环
-        color = self._colors.get(self._color_key, QColor("#3b82f6"))
-        span = int(360 * self.value / 100 * 16)
-        p.setPen(QPen(color, 10, Qt.PenStyle.SolidLine))
-        p.drawArc(int(cx - r), int(cy - r), int(r * 2), int(r * 2), 90 * 16, -span)
-
-        # 中心数值
-        p.setPen(QColor("#0f172a"))
-        font = QFont("Microsoft YaHei", 22, QFont.Weight.Bold)
-        p.setFont(font)
-        p.drawText(int(cx - 50), int(cy - 14), 100, 28, Qt.AlignmentFlag.AlignCenter, f"{self.value:.0f}%")
-
-        # 标签
-        p.setPen(QColor("#64748b"))
-        p.setFont(QFont("Microsoft YaHei", 10))
-        p.drawText(int(cx - 60), int(cy + 18), 120, 20, Qt.AlignmentFlag.AlignCenter, self.label)
-
-        # 详情
-        p.setFont(QFont("Microsoft YaHei", 8))
-        p.drawText(int(cx - 60), int(cy + 38), 120, 16, Qt.AlignmentFlag.AlignCenter, self.detail)
-        p.end()
+        self._label.setText(f"{label}  {value:.0f}%")
+        self._bar.setValue(int(value))
+        self._detail.setText(detail)
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -298,22 +285,17 @@ class DashboardView(QWidget):
         recs_header.addWidget(self.recs_count)
         recs_layout.addLayout(recs_header)
 
-        self.recs_scroll = QScrollArea()
-        self.recs_scroll.setWidgetResizable(True)
-        self.recs_scroll.setStyleSheet("QScrollArea { border: none; background: transparent; }")
         self.recs_content = QWidget()
         self.recs_content.setStyleSheet("background: transparent;")
         self.recs_list = QVBoxLayout(self.recs_content)
         self.recs_list.setSpacing(8)
         self.recs_list.setContentsMargins(0, 0, 0, 0)
-        self.recs_scroll.setWidget(self.recs_content)
-        self.recs_scroll.setMaximumHeight(220)
-        recs_layout.addWidget(self.recs_scroll)
+        recs_layout.addWidget(self.recs_content)
 
-        # 空状态占位
+        # 空状态
         self.recs_empty = QLabel("暂无优化建议，你的电脑很干净 ✨")
         self.recs_empty.setFont(QFont("Microsoft YaHei", 11))
-        self.recs_empty.setStyleSheet("color: #94a3b8; padding: 16px; border: none;")
+        self.recs_empty.setStyleSheet("color: #94a3b8; padding: 12px; border: none;")
         self.recs_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
         recs_layout.addWidget(self.recs_empty)
         self.recs_empty.hide()
@@ -397,12 +379,12 @@ class DashboardView(QWidget):
 
         if not recs:
             self.recs_empty.show()
-            self.recs_scroll.hide()
+            self.recs_content.hide()
             self.recs_count.setText("")
             return
 
         self.recs_empty.hide()
-        self.recs_scroll.show()
+        self.recs_content.show()
         self.recs_count.setText(f"{len(recs)} 条建议")
         for r in recs[:6]:
             self.recs_list.addWidget(self._make_rec_row(r))
