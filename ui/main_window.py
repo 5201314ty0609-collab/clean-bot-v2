@@ -48,6 +48,17 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("CleanBot v2.0 — 智能桌面清理机器人")
         self.setMinimumSize(1200, 800)
 
+        # 设置窗口图标（任务栏显示）
+        import sys, os
+        icon_paths = [
+            os.path.join(os.path.dirname(sys.executable), 'resources', 'icons', 'cleanbot.ico'),
+            'resources/icons/cleanbot.ico',
+        ]
+        for p in icon_paths:
+            if os.path.exists(p):
+                self.setWindowIcon(QIcon(p))
+                break
+
         # 扫描结果
         self.scan_result = None
         self.files_to_clean = []
@@ -1785,6 +1796,12 @@ def main():
     app.setApplicationName("CleanBot")
     app.setApplicationVersion("2.0.0")
     app.setOrganizationName("PHOENIX")
+
+    # 设置应用级图标（EXE 任务栏图标）
+    import os as _os
+    _icon = _os.path.join(_os.path.dirname(__file__), 'resources', 'icons', 'cleanbot.ico')
+    if _os.path.exists(_icon):
+        app.setWindowIcon(QIcon(_icon))
 
     # 启动时检查管理员权限
     from core.utils import is_admin, run_as_admin
