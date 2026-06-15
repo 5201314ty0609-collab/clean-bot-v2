@@ -83,7 +83,7 @@ class FileScanner:
         "C:\\Recovery",
     ]
 
-    def __init__(self, root_path: str = None, max_depth: int = 5):
+    def __init__(self, root_path: str = None, max_depth: int = 10):
         from core.utils import get_system_drive
         self.root_path = root_path or get_system_drive()
         self.max_depth = max_depth
