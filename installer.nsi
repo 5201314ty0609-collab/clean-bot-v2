@@ -47,26 +47,10 @@ Section "CleanBot 主程序" SEC01
   SetOutPath "$INSTDIR"
   SetOverwrite on
 
-  ; 复制主程序文件
-  File "dist\CleanBot.exe"
+  ; 复制主程序文件夹（onedir 模式）
+  File /r "dist\CleanBot\*.*"
   File "LICENSE"
   File "README.md"
-
-  ; 复制配置文件
-  SetOutPath "$INSTDIR\config"
-  File /r "config\*.*"
-
-  ; 复制资源文件
-  SetOutPath "$INSTDIR\resources"
-  File /r "resources\*.*"
-
-  ; 创建启动脚本
-  SetOutPath "$INSTDIR"
-  FileOpen $0 "$INSTDIR\start.bat" w
-  FileWrite $0 '@echo off$\r$\n'
-  FileWrite $0 'cd /d "%~dp0"$\r$\n'
-  FileWrite $0 'start "" CleanBot.exe$\r$\n'
-  FileClose $0
 
   ; 创建卸载脚本
   FileOpen $0 "$INSTDIR\uninstall.bat" w

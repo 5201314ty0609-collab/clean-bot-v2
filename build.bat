@@ -99,7 +99,7 @@ if errorlevel 1 (
     echo.
     echo   ⚠️  spec 模式失败，尝试命令行模式...
     echo.
-    pyinstaller --onefile --windowed ^
+    pyinstaller --onedir --windowed ^
         --name "CleanBot" ^
         --icon "resources/icons/cleanbot.ico" ^
         --add-data "config/file_types.json;config" ^
@@ -149,11 +149,12 @@ echo.
 echo   ╔══════════════════════════════════════════╗
 echo   ║          构建成功！                       ║
 echo   ║                                          ║
-echo   ║  输出: dist\CleanBot.exe                  ║
+echo   ║  输出文件夹: dist\CleanBot\               ║
+echo   ║  启动文件: dist\CleanBot\CleanBot.exe     ║
 echo   ╚══════════════════════════════════════════╝
 echo.
-for %%A in (dist\CleanBot.exe) do echo   文件大小: %%~zA bytes
-echo.
-echo   你可以将 CleanBot.exe 复制到任意 Windows 电脑直接运行
+echo   分享方式：把 dist\CleanBot 整个文件夹打包成 zip
+echo   用户解压后双击 CleanBot.exe 即可运行
+echo   ^(文件夹模式，不需要解压到临时目录，不会报内存不足^)
 echo.
 pause
