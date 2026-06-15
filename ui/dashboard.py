@@ -47,17 +47,6 @@ class DiagnosisSummaryThread(QThread):
         self.finished.emit(report)
 
 
-class RecsRefreshThread(QThread):
-    """后台刷新推荐"""
-    finished = pyqtSignal(list)
-
-    def run(self):
-        from core.ai.recommendation import RecommendationEngine
-        engine = RecommendationEngine()
-        recs = engine.generate_recommendations()
-        self.finished.emit(recs)
-
-
 # ═══════════════════════════════════════════════════════════════════════════
 # 简单可靠的状态条
 # ═══════════════════════════════════════════════════════════════════════════
@@ -142,14 +131,14 @@ class StatCard(QFrame):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         self.value_label = QLabel(value)
-        self.value_label.setFont(QFont("Microsoft YaHei", 26, QFont.Weight.Bold))
-        self.value_label.setStyleSheet(f"color: {fg}; border: none;")
+        self.value_label.setFont(QFont("Microsoft YaHei", 28, QFont.Weight.Bold))
+        self.value_label.setStyleSheet("color: #0f172a; border: none;")
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.value_label)
 
         label_w = QLabel(label)
         label_w.setFont(QFont("Microsoft YaHei", 11))
-        label_w.setStyleSheet(f"color: {fg}99; border: none;")
+        label_w.setStyleSheet("color: #475569; border: none;")
         label_w.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label_w)
 
@@ -265,46 +254,12 @@ class DashboardView(QWidget):
         mid_row.addWidget(self.diag_card, 2)
         main.addLayout(mid_row)
 
-        # ── 推荐区 ──
-        recs_card = QFrame()
-        recs_card.setStyleSheet("QFrame { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; }")
-        recs_layout = QVBoxLayout(recs_card)
-        recs_layout.setContentsMargins(20, 16, 20, 16)
-
-        recs_header = QHBoxLayout()
-        recs_title = QLabel("💡 优化建议")
-        recs_title.setFont(QFont("Microsoft YaHei", 14, QFont.Weight.Bold))
-        recs_title.setStyleSheet("color: #0f172a; border: none;")
-        recs_header.addWidget(recs_title)
-        recs_header.addStretch()
-        self.recs_count = QLabel("")
-        self.recs_count.setStyleSheet("color: #94a3b8; font-size: 12px; border: none;")
-        recs_header.addWidget(self.recs_count)
-        recs_layout.addLayout(recs_header)
-
-        self.recs_content = QWidget()
-        self.recs_content.setStyleSheet("background: transparent;")
-        self.recs_list = QVBoxLayout(self.recs_content)
-        self.recs_list.setSpacing(8)
-        self.recs_list.setContentsMargins(0, 0, 0, 0)
-        recs_layout.addWidget(self.recs_content)
-
-        # 空状态
-        self.recs_empty = QLabel("暂无优化建议，你的电脑很干净 ✨")
-        self.recs_empty.setFont(QFont("Microsoft YaHei", 11))
-        self.recs_empty.setStyleSheet("color: #94a3b8; padding: 12px; border: none;")
-        self.recs_empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        recs_layout.addWidget(self.recs_empty)
-        self.recs_empty.hide()
-
-        main.addWidget(recs_card)
 
     # ── 数据更新 ──
 
     def _start_monitoring(self):
         self._update_disk_mem_cpu()
         self._run_diagnosis()
-        self._refresh_recs()
 
     def _update_disk_mem_cpu(self):
         self._data_thread = DashboardDataThread()
@@ -359,64 +314,6 @@ class DashboardView(QWidget):
                 self.diag_detail.text() + "\n\n主要问题:\n" +
                 "\n".join(f"  • {p.title}" for p in report.problems[:3])
             )
-
-    # ── 推荐 ──
-
-    def _refresh_recs(self):
-        self._recs_thread = RecsRefreshThread()
-        self._recs_thread.finished.connect(self._on_recs_done)
-        self._recs_thread.start()
-
-    def _on_recs_done(self, recs):
-        # 清空
-        while self.recs_list.count():
-            w = self.recs_list.takeAt(0)
-            if w.widget():
-                w.widget().deleteLater()
-
-        if not recs:
-            self.recs_empty.show()
-            self.recs_content.hide()
-            self.recs_count.setText("")
-            return
-
-        self.recs_empty.hide()
-        self.recs_content.show()
-        self.recs_count.setText(f"{len(recs)} 条建议")
-        for r in recs[:6]:
-            self.recs_list.addWidget(self._make_rec_row(r))
-        self.recs_list.addStretch()
-
-    def _make_rec_row(self, rec) -> QFrame:
-        row = QFrame()
-        row.setStyleSheet("QFrame { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }")
-        layout = QHBoxLayout(row)
-        layout.setContentsMargins(16, 10, 16, 10)
-
-        prio_colors = {"high": "#ef4444", "medium": "#eab308", "low": "#22c55e"}
-        dot = QLabel("●")
-        dot.setStyleSheet(f"color: {prio_colors.get(rec.risk_level, '#94a3b8')}; font-size: 14px; border: none;")
-        dot.setFixedWidth(20)
-        layout.addWidget(dot)
-
-        text_col = QVBoxLayout()
-        title = QLabel(rec.title)
-        title.setFont(QFont("Microsoft YaHei", 11, QFont.Weight.Bold))
-        title.setStyleSheet("color: #0f172a; border: none;")
-        text_col.addWidget(title)
-
-        desc = QLabel(rec.description)
-        desc.setFont(QFont("Microsoft YaHei", 9))
-        desc.setStyleSheet("color: #64748b; border: none;")
-        text_col.addWidget(desc)
-        layout.addLayout(text_col)
-
-        savings = QLabel(f"≈ {fmt(rec.estimated_savings)}" if rec.estimated_savings > 0 else "")
-        savings.setStyleSheet("color: #16a34a; font-size: 11px; font-weight: 600; border: none;")
-        layout.addWidget(savings)
-
-        return row
-
 
 # ═══════════════════════════════════════════════════════════════════════════
 # 导出（兼容旧引用）
