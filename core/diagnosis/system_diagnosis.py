@@ -15,7 +15,7 @@ from datetime import datetime
 from enum import Enum
 
 
-def _run_hidden(cmd: list, timeout: int = 60) -> subprocess.CompletedProcess:
+def _run_hidden(cmd: list, timeout: int = 15) -> subprocess.CompletedProcess:
     """运行命令但不弹出控制台窗口（EXE 打包后必需）。"""
     if sys.platform == "win32":
         return subprocess.run(
@@ -574,10 +574,7 @@ class SystemDiagnosis:
         try:
             result = _run_hidden(
                 ["sfc", "/verifyonly"],
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
+                timeout=60)
             return result.returncode == 0
         except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
             return None  # 无法检查 — 不要假设正常
@@ -589,10 +586,7 @@ class SystemDiagnosis:
                 ["powershell", "-Command",
                  "(New-Object -ComObject Microsoft.Update.Session)"
                  ".CreateUpdateSearcher().Search('IsInstalled=0').Updates.Count"],
-                capture_output=True,
-                text=True,
-                timeout=120,
-            )
+                timeout=60)
             if result.returncode == 0 and result.stdout.strip().isdigit():
                 return int(result.stdout.strip()) > 0
             return None  # 无法解析输出
@@ -605,10 +599,7 @@ class SystemDiagnosis:
             result = _run_hidden(
                 ["powershell", "-Command",
                  "(Get-ComputerRestorePoint | Measure-Object).Count"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+                timeout=60)
             if result.returncode == 0 and result.stdout.strip().isdigit():
                 return int(result.stdout.strip()) > 0
             return None
@@ -622,10 +613,7 @@ class SystemDiagnosis:
                 ["powershell", "-Command",
                  "Get-MpComputerStatus | Select-Object -ExpandProperty "
                  "RealTimeProtectionEnabled"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+                timeout=60)
             if "True" in result.stdout:
                 return True
             if "False" in result.stdout:
@@ -639,10 +627,7 @@ class SystemDiagnosis:
         try:
             result = _run_hidden(
                 ["netsh", "advfirewall", "show", "allprofiles", "state"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+                timeout=60)
             if "ON" in result.stdout:
                 return True
             if "OFF" in result.stdout:
@@ -674,10 +659,7 @@ class SystemDiagnosis:
             # 使用 wmic 检查磁盘状态
             result = _run_hidden(
                 ["wmic", "diskdrive", "get", "status"],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+                timeout=60)
             return "OK" in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return True  # 假设正常
@@ -696,10 +678,7 @@ class SystemDiagnosis:
             # 使用碎片分析工具
             result = _run_hidden(
                 ["defrag", f"{letter}:", "/a", "/v"],
-                capture_output=True,
-                text=True,
-                timeout=300,
-            )
+                timeout=60)
             return "碎片率" in result.stdout and "0%" not in result.stdout
         except (subprocess.TimeoutExpired, FileNotFoundError):
             return False
