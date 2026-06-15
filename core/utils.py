@@ -196,23 +196,30 @@ def is_admin() -> bool:
 
 
 def run_as_admin() -> bool:
-    """以管理员权限重新启动当前程序。
+    """以管理员权限重新启动当前程序（兼容 PyInstaller EXE）。
 
-    PyInstaller EXE 兼容：使用 ShellExecuteW 提权重启自身。
-    返回 True 表示提权请求已发出（当前进程随即退出）。
+    Windows 下弹出 UAC 对话框，用户确认后以管理员重启，当前进程退出。
+    返回 False 表示用户取消了 UAC 或提权失败。
     """
     if sys.platform != "win32":
         return False
 
     import ctypes
-    # 构建完整命令行（EXE 路径 + 所有参数）
-    exe_path = sys.executable
-    args = " ".join(f'"{a}"' if " " in a else a for a in sys.argv[1:])
+
+    # PyInstaller 打包后 sys.executable 就是 EXE 自身路径
+    # 用 ShellExecuteW + runas 弹出 UAC 提权对话框
+    exe = sys.executable
     result = ctypes.windll.shell32.ShellExecuteW(
-        None, "runas", exe_path, args, None, 1  # SW_SHOWNORMAL
+        None,               # hwnd
+        "runas",            # 提权动词
+        exe,                # 程序路径
+        "",                 # 参数（空，PyInstaller EXE 不需要额外参数）
+        None,               # 工作目录
+        1,                  # SW_SHOWNORMAL
     )
+    # ShellExecuteW 返回值 > 32 表示成功
     if result > 32:
-        sys.exit(0)
+        os._exit(0)  # 强制退出（PyInstaller 中 sys.exit 可能被 Qt 拦截）
     return False
 
 
