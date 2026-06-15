@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
     def __init__(self, robot=None):
         super().__init__()
 
-        self.setWindowTitle("CleanBot v2.0 — 智能桌面清理机器人")
+        self.setWindowTitle("CleanBot v3.0 — 智能桌面清理机器人")
         self.setMinimumSize(1200, 800)
 
         # 任务栏/窗口图标（base64 内嵌，不依赖文件）
