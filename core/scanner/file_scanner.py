@@ -83,10 +83,22 @@ class FileScanner:
         "C:\\Recovery",
     ]
 
-    def __init__(self, root_path: str = None, max_depth: int = 10):
+    def __init__(self, root_path: str = None, max_depth: int = 6):
         from core.utils import get_system_drive
         self.root_path = root_path or get_system_drive()
         self.max_depth = max_depth
+
+        # 快速扫描路径（用户目录下的垃圾聚集地）
+        import os as _os
+        _profile = _os.environ.get('USERPROFILE', '')
+        self._quick_paths = [
+            _os.path.join(_profile, 'AppData', 'Local', 'Temp'),
+            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Temp'),
+            _os.path.join(_profile, 'AppData', 'Local', 'Microsoft', 'Windows', 'INetCache'),
+            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Prefetch'),
+            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Logs'),
+            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'SoftwareDistribution', 'Download'),
+        ]
         self.scan_result = ScanResult()
         self.scanned_files: List[FileInfo] = []
         self._excluded_paths: Set[str] = set()
@@ -116,7 +128,12 @@ class FileScanner:
         # 预处理排除路径
         self._prepare_excluded_paths()
 
-        # 扫描文件
+        # 先扫快速路径（用户临时文件聚集地）
+        for quick_path in self._quick_paths:
+            if os.path.exists(quick_path):
+                self._scan_directory(quick_path, 0, progress_callback)
+
+        # 再浅扫系统盘根目录
         self._scan_directory(self.root_path, 0, progress_callback)
 
         # 分析结果
