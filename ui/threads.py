@@ -13,15 +13,19 @@ class ScanThread(QThread):
     progress = pyqtSignal(int, int)
     finished = pyqtSignal(object)
 
-    def __init__(self, root_path: str = None):
+    def __init__(self, root_path: str = None, deep: bool = False):
         super().__init__()
         from core.utils import get_system_drive
         self.root_path = root_path or get_system_drive()
+        self.deep = deep
 
     def run(self):
         from core.scanner.file_scanner import FileScanner
         scanner = FileScanner(self.root_path)
-        result = scanner.scan(progress_callback=lambda c, s: self.progress.emit(c, s))
+        result = scanner.scan(
+            progress_callback=lambda c, s: self.progress.emit(c, s),
+            deep=self.deep,
+        )
         self.finished.emit(result)
 
 

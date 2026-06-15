@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         # 扫描结果
         self.scan_result = None
         self.files_to_clean = []
+        self.is_deep_scan = False
 
         # Robot reference (optional, for task integration)
         self.robot = robot
@@ -322,23 +323,33 @@ class MainWindow(QMainWindow):
         title_label = QLabel("文件扫描")
         title_label.setFont(QFont("Microsoft YaHei", 20, QFont.Weight.Bold))
         title_layout.addWidget(title_label)
-
         title_layout.addStretch()
+
+        # 快速/深度切换
+        self.scan_mode_label = QLabel("⚡ 快速扫描")
+        self.scan_mode_label.setFont(QFont("Microsoft YaHei", 11, QFont.Weight.Bold))
+        self.scan_mode_label.setStyleSheet("color: #2563eb; border: none; padding: 6px 12px;")
+        title_layout.addWidget(self.scan_mode_label)
+
+        deep_btn = QPushButton("切换深度扫描")
+        deep_btn.setFont(QFont("Microsoft YaHei", 10))
+        deep_btn.setStyleSheet("""
+            QPushButton { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 6px;
+                          padding: 6px 12px; color: #475569; }
+            QPushButton:hover { background: #e2e8f0; }
+        """)
+        deep_btn.clicked.connect(self._toggle_scan_mode)
+        title_layout.addWidget(deep_btn)
+
+        title_layout.addSpacing(8)
 
         # 扫描按钮
         scan_button = QPushButton("开始扫描")
-        scan_button.setFont(QFont("Microsoft YaHei", 11))
+        scan_button.setFont(QFont("Microsoft YaHei", 11, QFont.Weight.Bold))
         scan_button.setStyleSheet("""
-            QPushButton {
-                background-color: #2196F3;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
-            }
-            QPushButton:hover {
-                background-color: #1976D2;
-            }
+            QPushButton { background: #2563eb; color: white; border: none;
+                          border-radius: 8px; padding: 9px 22px; }
+            QPushButton:hover { background: #1d4ed8; }
         """)
         scan_button.clicked.connect(self._start_scan)
         title_layout.addWidget(scan_button)
@@ -1002,6 +1013,16 @@ class MainWindow(QMainWindow):
         for i, button in enumerate(self.nav_buttons):
             button.setChecked(i == index)
 
+    def _toggle_scan_mode(self):
+        """切换快速/深度扫描"""
+        self.is_deep_scan = not self.is_deep_scan
+        if self.is_deep_scan:
+            self.scan_mode_label.setText("🔬 深度扫描")
+            self.scan_mode_label.setStyleSheet("color: #7c3aed; font-weight: bold; border: none; padding: 6px 12px;")
+        else:
+            self.scan_mode_label.setText("⚡ 快速扫描")
+            self.scan_mode_label.setStyleSheet("color: #2563eb; font-weight: bold; border: none; padding: 6px 12px;")
+
     def _start_scan(self):
         """开始扫描"""
         # 禁用按钮
@@ -1023,7 +1044,7 @@ class MainWindow(QMainWindow):
 
         # 创建扫描线程
         from core.utils import get_system_drive
-        self.scan_thread = ScanThread(get_system_drive())
+        self.scan_thread = ScanThread(get_system_drive(), deep=self.is_deep_scan)
         self.scan_thread.progress.connect(self._on_scan_progress)
         self.scan_thread.finished.connect(self._on_scan_finished)
         self.scan_thread.start()

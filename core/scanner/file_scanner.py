@@ -57,9 +57,23 @@ class ScanResult:
 
 
 class FileScanner:
-    """文件扫描器 — 快速模式优先扫垃圾聚集地"""
+    """文件扫描器 — 快速/深度双模式，绝不误删用户文档"""
 
-    # 可直接删除的扩展名
+    # 绝不可删除的用户文件扩展名（文档/媒体/代码）
+    NEVER_DELETE = {
+        ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+        ".pdf", ".txt", ".rtf", ".odt", ".ods", ".odp",
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".svg",
+        ".mp3", ".mp4", ".avi", ".mkv", ".mov", ".wav",
+        ".py", ".js", ".ts", ".java", ".cpp", ".c", ".h", ".go", ".rs",
+        ".zip", ".rar", ".7z", ".tar", ".gz",
+        ".db", ".sqlite", ".mdb", ".accdb",
+        ".psd", ".ai", ".sketch", ".fig",
+        ".pages", ".numbers", ".key",
+        ".exe", ".dll", ".msi", ".sys", ".drv",
+    }
+
+    # 可直接删除的扩展名（仅限系统/应用垃圾）
     SAFE_EXTENSIONS = {
         ".tmp", ".temp", ".log", ".bak", ".old", ".backup",
         ".cache", ".dmp", ".crash", ".etl", ".evtx", ".mdmp",
@@ -111,27 +125,45 @@ class FileScanner:
             os.path.join(_profile, 'AppData', 'Local', 'CrashDumps'),
             os.path.join(_profile, 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Recent'),
         ]
+
+        # 深度扫描额外路径（用户目录，但跳过文档/媒体）
+        self._deep_paths = [
+            os.path.join(_profile, 'AppData'),
+            os.path.join(_profile, 'Downloads'),
+            os.path.join(_windir, 'WinSxS', 'Temp'),
+            os.path.join(_windir, 'ServiceProfiles'),
+            os.path.join(_profile, 'AppData', 'LocalLow'),
+        ]
         self.scan_result = ScanResult()
         self.scanned_files: List[FileInfo] = []
         self._excluded_paths: Set[str] = set()
         self._hash_cache: Dict[str, str] = {}
 
-    def scan(self, progress_callback=None) -> ScanResult:
-        """扫描文件系统"""
+    def scan(self, progress_callback=None, deep: bool = False) -> ScanResult:
+        """扫描文件系统。
+
+        Args:
+            progress_callback: 进度回调 (file_count, total_size)
+            deep: True=深度扫描（含用户目录，较慢但更全面）
+        """
         start_time = time.time()
 
-        # 清空上次扫描结果
+        # 清空
         self.scan_result = ScanResult()
         self.scanned_files = []
         self._hash_cache.clear()
-
-        # 预处理排除路径
         self._prepare_excluded_paths()
 
-        # 快速扫描：只扫垃圾聚集地（秒级完成）
+        # 快速路径（两种模式都扫）
         for quick_path in self._quick_paths:
             if os.path.exists(quick_path):
                 self._scan_directory(quick_path, 0, progress_callback)
+
+        # 深度扫描额外路径
+        if deep:
+            for deep_path in self._deep_paths:
+                if os.path.exists(deep_path):
+                    self._scan_directory(deep_path, 0, progress_callback)  # 深度6够用
 
         # 分析结果
         self._analyze_results()
@@ -242,10 +274,15 @@ class FileScanner:
             return None
 
     def _categorize_file(self, file_info: FileInfo):
-        """快速分类 — 路径匹配 > 扩展名 > 大文件 > 跳过"""
+        """分类文件 — 绝不误删文档/媒体/代码"""
         path_lower = file_info.path.lower()
         ext = file_info.extension
         _set = self._set_info
+
+        # 0. 文档/媒体/代码 — 绝不删除
+        if ext in self.NEVER_DELETE:
+            _set(file_info, "protected", "skip", "用户文件", "🔒 保护", "重要文件，不会删除")
+            return
 
         # 1. 路径关键词匹配
         for kw in self.CLEAN_PATH_KEYWORDS:
