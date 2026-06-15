@@ -144,10 +144,15 @@ def main() -> None:
     try:
         from ui.main_window import main as gui_main
         gui_main()
-    except ImportError as e:
-        _fatal_error("CleanBot", f"启动失败：缺少必要文件\n{e}")
     except Exception as e:
-        _fatal_error("CleanBot", f"启动失败：{e}")
+        # 确保 QApplication 已创建再弹错误框
+        try:
+            from PyQt6.QtWidgets import QApplication, QMessageBox
+            app = QApplication.instance() or QApplication(sys.argv)
+            QMessageBox.critical(None, "启动失败", str(e))
+        except Exception:
+            pass
+        sys.exit(1)
 
 
 if __name__ == "__main__":
