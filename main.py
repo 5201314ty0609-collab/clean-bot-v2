@@ -128,16 +128,21 @@ def _import_failed(package: str) -> bool:
 # ═══════════════════════════════════════════════════════════════════════════
 
 def main() -> None:
-    """CleanBot 主入口 — 启动 GUI。"""
+    """CleanBot 主入口 — 启动 GUI。
+
+    依赖检测只在源码模式运行一次。EXE 打包后无需此步骤。
+    """
     check_platform()
 
-    if not ensure_dependencies():
-        _fatal_error(
-            "CleanBot",
-            "依赖安装失败。\n\n"
-            "请手动运行：\n"
-            "pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple"
-        )
+    # 仅在源码运行时检查依赖（EXE 已内置所有依赖）
+    if not getattr(sys, 'frozen', False):
+        if not ensure_dependencies():
+            _fatal_error(
+                "CleanBot",
+                "依赖安装失败。\n\n"
+                "请手动运行：\n"
+                "pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple"
+            )
 
     try:
         from ui.main_window import main as gui_main
