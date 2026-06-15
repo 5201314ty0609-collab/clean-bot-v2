@@ -7,8 +7,6 @@ CleanBot v2.0 — PyInstaller 打包配置
     或直接双击 build.bat
 """
 
-import os
-
 block_cipher = None
 
 # ── 隐式导入（确保所有模块被打包） ──
@@ -41,12 +39,11 @@ hidden_imports = [
 ]
 
 # ── 数据文件 ──
-_base = os.path.dirname(SPECPATH)
 datas = [
-    (os.path.join(_base, 'config/file_types.json'), 'config'),
-    (os.path.join(_base, 'config/update_config.json'), 'config'),
-    (os.path.join(_base, 'resources/icons/cleanbot.ico'), 'resources/icons'),
-    (os.path.join(_base, 'ui/robot/characters/conan/config.json'), 'ui/robot/characters/conan'),
+    ('config/file_types.json', 'config'),
+    ('config/update_config.json', 'config'),
+    ('resources/icons/cleanbot.ico', 'resources/icons'),
+    ('ui/robot/characters/conan/config.json', 'ui/robot/characters/conan'),
 ]
 
 # ── 排除不需要的模块（减小体积） ──
@@ -90,7 +87,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=os.path.join(os.path.dirname(SPECPATH), 'resources', 'icons', 'cleanbot.ico'),
+    icon='resources/icons/cleanbot.ico',
 )
 
 # 文件夹模式 — 所有 DLL 和资源放在 exe 旁边，无需解压到临时目录
