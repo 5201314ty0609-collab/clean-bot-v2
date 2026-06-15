@@ -91,8 +91,17 @@ class FileScanner:
         self.scanned_files: List[FileInfo] = []
         self._excluded_paths: Set[str] = set()
         self._hash_cache: Dict[str, str] = {}
-        # Smart analyzer (lazy init)
+        # Smart analyzer (singleton, lazy init)
         self._analyzer = None
+
+    def _get_analyzer(self):
+        if self._analyzer is None:
+            try:
+                from core.analyzer.smart_analyzer import SmartAnalyzer
+                self._analyzer = SmartAnalyzer()
+            except ImportError:
+                pass
+        return self._analyzer
 
     def scan(self, progress_callback=None) -> ScanResult:
         """扫描文件系统"""
@@ -102,13 +111,7 @@ class FileScanner:
         self.scan_result = ScanResult()
         self.scanned_files = []
         self._hash_cache.clear()
-
-        # Initialize smart analyzer
-        try:
-            from core.analyzer.smart_analyzer import SmartAnalyzer
-            self._analyzer = SmartAnalyzer()
-        except ImportError:
-            self._analyzer = None
+        self._analyzer = None  # Reset analyzer for fresh scan
 
         # 预处理排除路径
         self._prepare_excluded_paths()
@@ -177,7 +180,8 @@ class FileScanner:
                                 self.scan_result.total_files += 1
                                 self.scan_result.total_size += file_info.size
 
-                                if progress_callback:
+                                # 每100个文件回调一次，避免UI卡顿
+                                if progress_callback and self.scan_result.total_files % 100 == 0:
                                     progress_callback(self.scan_result.total_files, self.scan_result.total_size)
 
                         elif entry.is_dir(follow_symlinks=False):
@@ -226,8 +230,9 @@ class FileScanner:
     def _categorize_file(self, file_info: FileInfo):
         """分类文件 (uses SmartAnalyzer when available)"""
         # Try smart analyzer first
-        if self._analyzer is not None:
-            analysis = self._analyzer.analyze_file(
+        analyzer = self._get_analyzer()
+        if analyzer is not None:
+            analysis = analyzer.analyze_file(
                 path=file_info.path,
                 size=file_info.size,
                 extension=file_info.extension,
@@ -239,7 +244,7 @@ class FileScanner:
             file_info.file_type = analysis.category
             file_info.risk_level = analysis.risk.value
             file_info.risk_reason = analysis.risk_reason
-            file_info.type_name = self._analyzer.get_type_name(file_info.extension)
+            file_info.type_name = analyzer.get_type_name(file_info.extension)
             file_info.impact = analysis.impact
             file_info.clean_score = analysis.score
 

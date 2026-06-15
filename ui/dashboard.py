@@ -114,56 +114,42 @@ class RingGauge(QWidget):
 # ═══════════════════════════════════════════════════════════════════════════
 
 class StatCard(QFrame):
-    """大图标信息卡片"""
+    """纯色卡片 — 颜色即信息，无需图标"""
+
+    _palette = {
+        "#ef4444": ("#fef2f2", "#991b1b", "#dc2626"),  # 红
+        "#3b82f6": ("#eff6ff", "#1e40af", "#2563eb"),  # 蓝
+        "#22c55e": ("#f0fdf4", "#166534", "#16a34a"),  # 绿
+        "#8b5cf6": ("#f5f3ff", "#5b21b6", "#7c3aed"),  # 紫
+        "#eab308": ("#fefce8", "#854d0e", "#ca8a04"),  # 黄
+    }
 
     def __init__(self, icon: str, label: str, value: str, accent: str = "#3b82f6"):
         super().__init__()
-        accent_rgb = {
-            "#ef4444": "rgba(239,68,68,0.12)",
-            "#3b82f6": "rgba(59,130,246,0.12)",
-            "#22c55e": "rgba(34,197,94,0.12)",
-            "#8b5cf6": "rgba(139,92,246,0.12)",
-            "#eab308": "rgba(234,179,8,0.12)",
-        }.get(accent, "rgba(59,130,246,0.12)")
-
+        bg, fg, border = self._palette.get(accent, self._palette["#3b82f6"])
         self.setStyleSheet(f"""
             QFrame {{
-                background: #ffffff;
-                border: 1px solid #e2e8f0;
+                background: {bg};
+                border: 2px solid {border}30;
                 border-radius: 16px;
-                padding: 20px;
-            }}
-            QFrame:hover {{
-                border-color: {accent};
-                background: #fafbfd;
+                padding: 24px 16px;
             }}
         """)
-        self.setMinimumHeight(110)
+        self.setMinimumHeight(100)
 
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(12)
+        layout.setSpacing(6)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        # 大图标在上
-        icon_wrap = QLabel(icon)
-        icon_wrap.setFixedSize(52, 52)
-        icon_wrap.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        icon_wrap.setStyleSheet(f"""
-            background: {accent_rgb}; border-radius: 14px; font-size: 28px; border: none;
-        """)
-        layout.addWidget(icon_wrap)
-
-        # 数值在下
         self.value_label = QLabel(value)
-        self.value_label.setFont(QFont("Microsoft YaHei", 24, QFont.Weight.Bold))
-        self.value_label.setStyleSheet(f"color: #0f172a; border: none;")
+        self.value_label.setFont(QFont("Microsoft YaHei", 26, QFont.Weight.Bold))
+        self.value_label.setStyleSheet(f"color: {fg}; border: none;")
         self.value_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.value_label)
 
-        # 标签在最下
         label_w = QLabel(label)
-        label_w.setFont(QFont("Microsoft YaHei", 10))
-        label_w.setStyleSheet("color: #64748b; border: none;")
+        label_w.setFont(QFont("Microsoft YaHei", 11))
+        label_w.setStyleSheet(f"color: {fg}99; border: none;")
         label_w.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(label_w)
 
