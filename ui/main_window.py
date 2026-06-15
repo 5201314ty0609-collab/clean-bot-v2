@@ -114,146 +114,156 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage("准备就绪")
 
     def _create_toolbar(self) -> QWidget:
-        """创建工具栏"""
+        """创建顶部工具栏"""
         toolbar = QFrame()
-        toolbar.setFrameStyle(QFrame.Shape.StyledPanel)
+        toolbar.setFixedHeight(56)
         toolbar.setStyleSheet("""
             QFrame {
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 #1565C0, stop:1 #1976D2);
+                background-color: #ffffff;
                 border: none;
-                border-bottom: 1px solid #0D47A1;
+                border-bottom: 1px solid #e2e8f0;
             }
         """)
 
         layout = QHBoxLayout(toolbar)
-        layout.setContentsMargins(20, 10, 20, 10)
+        layout.setContentsMargins(24, 0, 24, 0)
+        layout.setAlignment(Qt.AlignmentFlag.AlignVCenter)
 
-        # 标题
-        title_label = QLabel("CleanBot v2.0")
-        title_label.setFont(QFont("Microsoft YaHei", 18, QFont.Weight.Bold))
-        title_label.setStyleSheet("color: white;")
-        layout.addWidget(title_label)
+        # Logo / 标题
+        title = QLabel("🧹 CleanBot")
+        title.setFont(QFont("Microsoft YaHei", 16, QFont.Weight.Bold))
+        title.setStyleSheet("color: #1e293b; border: none;")
+        layout.addWidget(title)
 
-        # 副标题
-        subtitle_label = QLabel("智能桌面清理机器人")
-        subtitle_label.setFont(QFont("Microsoft YaHei", 10))
-        subtitle_label.setStyleSheet("color: rgba(255, 255, 255, 0.8);")
-        layout.addWidget(subtitle_label)
+        layout.addSpacing(8)
+
+        # 管理员状态
+        from core.utils import is_admin
+        if is_admin():
+            badge = QLabel("管理员")
+            badge.setStyleSheet(
+                "background: #dcfce7; color: #166534; border-radius: 10px;"
+                "padding: 3px 12px; font-size: 11px; font-weight: 600; border: none;"
+            )
+        else:
+            badge = QLabel("普通模式")
+            badge.setStyleSheet(
+                "background: #fef3c7; color: #92400e; border-radius: 10px;"
+                "padding: 3px 12px; font-size: 11px; font-weight: 600; border: none;"
+            )
+        layout.addWidget(badge)
 
         layout.addStretch()
 
-        # 管理员状态标识
-        from core.utils import is_admin
-        admin_text = "🔒 管理员模式" if is_admin() else "🔓 普通模式（迁移功能需管理员权限）"
-        admin_color = "#4CAF50" if is_admin() else "#FFC107"
-        admin_label = QLabel(admin_text)
-        admin_label.setFont(QFont("Microsoft YaHei", 9))
-        admin_label.setStyleSheet(f"color: {admin_color}; padding: 2px 10px;")
-        layout.addWidget(admin_label)
-
         # 扫描按钮
-        self.scan_button = QPushButton("开始扫描")
-        self.scan_button.setFont(QFont("Microsoft YaHei", 11))
-        self.scan_button.setStyleSheet("""
+        self.scan_btn = QPushButton("🔍 开始扫描")
+        self.scan_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Weight.Bold))
+        self.scan_btn.setStyleSheet("""
             QPushButton {
-                background-color: white;
-                color: #2196F3;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
+                background: #2563eb; color: white; border: none;
+                border-radius: 10px; padding: 10px 24px;
             }
-            QPushButton:hover {
-                background-color: #E3F2FD;
-            }
+            QPushButton:hover { background: #1d4ed8; }
+            QPushButton:disabled { background: #94a3b8; }
         """)
-        self.scan_button.clicked.connect(self._start_scan)
-        layout.addWidget(self.scan_button)
+        self.scan_btn.clicked.connect(self._start_scan)
+        layout.addWidget(self.scan_btn)
 
         # 清理按钮
-        self.clean_button = QPushButton("清理选中")
-        self.clean_button.setFont(QFont("Microsoft YaHei", 11))
-        self.clean_button.setStyleSheet("""
+        self.clean_btn = QPushButton("🧹 清理选中")
+        self.clean_btn.setFont(QFont("Microsoft YaHei", 12, QFont.Weight.Bold))
+        self.clean_btn.setStyleSheet("""
             QPushButton {
-                background-color: #FF6B6B;
-                color: white;
-                border: none;
-                border-radius: 5px;
-                padding: 8px 20px;
+                background: #ef4444; color: white; border: none;
+                border-radius: 10px; padding: 10px 24px;
             }
-            QPushButton:hover {
-                background-color: #FF5252;
-            }
+            QPushButton:hover { background: #dc2626; }
+            QPushButton:disabled { background: #fca5a5; }
         """)
-        self.clean_button.setEnabled(False)
-        self.clean_button.clicked.connect(self._start_clean)
-        layout.addWidget(self.clean_button)
+        self.clean_btn.setEnabled(False)
+        self.clean_btn.clicked.connect(self._start_clean)
+        layout.addWidget(self.clean_btn)
 
         return toolbar
 
     def _create_navigation(self) -> QWidget:
-        """创建导航栏"""
+        """创建侧边导航栏（深色主题）"""
         nav = QFrame()
-        nav.setFrameStyle(QFrame.Shape.StyledPanel)
-        nav.setFixedWidth(200)
+        nav.setFixedWidth(220)
         nav.setStyleSheet("""
             QFrame {
-                background-color: #FFFFFF;
+                background-color: #0f172a;
                 border: none;
-                border-right: 1px solid #DEE2E6;
+                border-right: 1px solid #1e293b;
             }
         """)
 
         layout = QVBoxLayout(nav)
-        layout.setSpacing(5)
-        layout.setContentsMargins(10, 20, 10, 20)
+        layout.setSpacing(2)
+        layout.setContentsMargins(10, 16, 10, 16)
 
-        # 导航按钮
-        nav_buttons = [
-            ("仪表盘", 0),
-            ("系统诊断", 1),
-            ("文件扫描", 2),
-            ("文件迁移", 3),
-            ("应用迁移", 4),
-            ("智能删除", 5),
-            ("智能推荐", 6),
-            ("磁盘监控", 7),
-            ("设置", 8),
+        # 应用 Logo
+        logo = QLabel("  🧹  CleanBot")
+        logo.setFont(QFont("Microsoft YaHei", 14, QFont.Weight.Bold))
+        logo.setStyleSheet("color: #f1f5f9; padding: 12px 8px; border: none; margin-bottom: 12px;")
+        layout.addWidget(logo)
+
+        # 分隔线
+        sep = QFrame()
+        sep.setFrameShape(QFrame.Shape.HLine)
+        sep.setStyleSheet("background: #334155; border: none; margin: 4px 8px;")
+        layout.addWidget(sep)
+
+        # 导航项 (图标, 文字, 页面索引)
+        nav_items = [
+            ("📊", "仪表盘", 0),
+            ("🏥", "系统诊断", 1),
+            ("🔍", "文件扫描", 2),
+            ("📁", "文件迁移", 3),
+            ("📦", "应用迁移", 4),
+            ("🗑️", "智能删除", 5),
+            ("💡", "智能推荐", 6),
+            ("📈", "磁盘监控", 7),
+            ("⚙️", "设置", 8),
         ]
 
-        for text, index in nav_buttons:
-            button = QPushButton(text)
-            button.setFont(QFont("Microsoft YaHei", 11))
-            button.setStyleSheet("""
+        self.nav_buttons = []
+        for icon, text, index in nav_items:
+            btn = QPushButton(f"  {icon}  {text}")
+            btn.setFont(QFont("Microsoft YaHei", 11))
+            btn.setFixedHeight(42)
+            btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            btn.setCheckable(True)
+            btn.setChecked(index == 0)
+            btn.setStyleSheet("""
                 QPushButton {
                     background-color: transparent;
-                    color: #495057;
+                    color: #94a3b8;
                     border: none;
                     border-radius: 8px;
-                    padding: 12px 16px;
                     text-align: left;
-                    font-size: 13px;
+                    padding-left: 12px;
                 }
                 QPushButton:hover {
-                    background-color: #F1F3F5;
+                    background-color: #1e293b;
+                    color: #e2e8f0;
                 }
                 QPushButton:checked {
-                    background-color: #E3F2FD;
-                    color: #1565C0;
-                    font-weight: bold;
+                    background-color: #2563eb;
+                    color: white;
+                    font-weight: 600;
                 }
             """)
-            button.setCheckable(True)
-            button.clicked.connect(lambda checked, idx=index: self._switch_page(idx))
-            layout.addWidget(button)
-
-            # 保存第一个按钮的引用
-            if index == 0:
-                self.nav_buttons = [button]
-            else:
-                self.nav_buttons.append(button)
+            btn.clicked.connect(lambda checked, i=index: self._switch_page(i))
+            layout.addWidget(btn)
+            self.nav_buttons.append(btn)
 
         layout.addStretch()
+
+        # 版本号
+        ver = QLabel(f"  v{CURRENT_VERSION}")
+        ver.setStyleSheet("color: #475569; font-size: 11px; padding: 8px; border: none;")
+        layout.addWidget(ver)
 
         return nav
 
@@ -1064,8 +1074,8 @@ class MainWindow(QMainWindow):
     def _start_scan(self):
         """开始扫描"""
         # 禁用按钮
-        self.scan_button.setEnabled(False)
-        self.clean_button.setEnabled(False)
+        self.scan_btn.setEnabled(False)
+        self.clean_btn.setEnabled(False)
 
         # 显示进度条
         self.scan_progress.setVisible(True)
@@ -1102,8 +1112,8 @@ class MainWindow(QMainWindow):
         self._update_files_table()
 
         # 启用按钮
-        self.scan_button.setEnabled(True)
-        self.clean_button.setEnabled(True)
+        self.scan_btn.setEnabled(True)
+        self.clean_btn.setEnabled(True)
 
         # 隐藏进度条
         self.scan_progress.setVisible(False)
@@ -1291,8 +1301,8 @@ class MainWindow(QMainWindow):
             return
 
         # 禁用按钮
-        self.scan_button.setEnabled(False)
-        self.clean_button.setEnabled(False)
+        self.scan_btn.setEnabled(False)
+        self.clean_btn.setEnabled(False)
 
         # 显示进度条
         self.scan_progress.setVisible(True)
@@ -1323,8 +1333,8 @@ class MainWindow(QMainWindow):
         """清理完成"""
         self.scan_progress.setVisible(False)
 
-        self.scan_button.setEnabled(True)
-        self.clean_button.setEnabled(True)
+        self.scan_btn.setEnabled(True)
+        self.clean_btn.setEnabled(True)
 
         msg = (
             f"清理完成！\n\n"
@@ -1898,14 +1908,31 @@ class MainWindow(QMainWindow):
 def main():
     """GUI 入口"""
     app = QApplication(sys.argv)
-
     app.setApplicationName("CleanBot")
     app.setApplicationVersion("2.0.0")
     app.setOrganizationName("PHOENIX")
 
+    # 启动时检查管理员权限
+    from core.utils import is_admin, run_as_admin
+    if not is_admin():
+        answer = QMessageBox.question(
+            None,
+            "CleanBot — 管理员权限",
+            "建议以管理员身份运行 CleanBot，以便使用全部功能：\n\n"
+            "  • 文件迁移和应用迁移\n"
+            "  • 系统诊断和修复\n"
+            "  • 深度清理\n\n"
+            "是否以管理员身份重新启动？\n"
+            "（选择「否」将以普通模式继续，部分功能受限）",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.Yes,
+        )
+        if answer == QMessageBox.StandardButton.Yes:
+            run_as_admin()
+            sys.exit(0)
+
     window = MainWindow()
     window.show()
-
     sys.exit(app.exec())
 
 

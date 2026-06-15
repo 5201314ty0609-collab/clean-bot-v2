@@ -127,32 +127,6 @@ def _import_failed(package: str) -> bool:
 # 主入口
 # ═══════════════════════════════════════════════════════════════════════════
 
-def _request_admin() -> None:
-    """如果不是管理员，弹窗询问是否提权重启。"""
-    from core.utils import is_admin, run_as_admin
-
-    if is_admin():
-        return  # 已经是管理员，直接继续
-
-    # 用 Windows API 弹原生对话框（PyQt 还没加载）
-    if sys.platform == "win32":
-        import ctypes
-        answer = ctypes.windll.user32.MessageBoxW(
-            0,
-            "CleanBot 建议以管理员身份运行，以便使用全部功能。\n\n"
-            "• 文件迁移和应用迁移\n"
-            "• 系统诊断和修复\n"
-            "• 注册表清理\n\n"
-            "是否以管理员身份重新启动？\n"
-            "（选择"否"将以普通模式继续，部分功能受限）",
-            "CleanBot v2.0",
-            0x04 | 0x40,  # MB_YESNO | MB_ICONQUESTION
-        )
-        if answer == 6:  # IDYES
-            run_as_admin()
-            # run_as_admin 成功会退出，失败则继续
-
-
 def main() -> None:
     """CleanBot 主入口 — 启动 GUI。"""
     check_platform()
@@ -166,9 +140,6 @@ def main() -> None:
                 "请手动运行：\n"
                 "pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple"
             )
-
-    # 启动前提权询问（迁移/诊断等功能需要管理员）
-    _request_admin()
 
     try:
         from ui.main_window import main as gui_main
