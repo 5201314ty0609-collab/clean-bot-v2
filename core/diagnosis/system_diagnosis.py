@@ -94,34 +94,40 @@ class SystemDiagnosis:
         self.system_info: Dict = {}
 
     def run_full_diagnosis(self) -> DiagnosisReport:
-        """运行完整诊断"""
+        """运行完整诊断（subprocess 检测并行执行以加速）。"""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
         start_time = time.time()
 
         # 收集系统信息
         self.system_info = self._collect_system_info()
 
-        # 检测问题
+        # ── 慢速检测并行执行 ──
+        slow_results = {}
+        slow_checks = {
+            "integrity": self._check_system_files_integrity,
+            "updates": self._has_pending_updates,
+            "restore": self._has_restore_points,
+            "defender": self._is_defender_enabled,
+            "firewall": self._is_firewall_enabled,
+        }
+        with ThreadPoolExecutor(max_workers=4) as ex:
+            futures = {ex.submit(fn): name for name, fn in slow_checks.items()}
+            for future in as_completed(futures, timeout=30):
+                name = futures[future]
+                try:
+                    slow_results[name] = future.result(timeout=5)
+                except Exception:
+                    slow_results[name] = None
+
+        # ── 检测问题 ──
         self.problems = []
-
-        # 系统问题检测
-        self.problems.extend(self._detect_system_problems())
-
-        # 性能问题检测
+        self.problems.extend(self._detect_system_problems(slow_results))
         self.problems.extend(self._detect_performance_problems())
-
-        # 安全问题检测
-        self.problems.extend(self._detect_security_problems())
-
-        # 磁盘问题检测
-        self.problems.extend(self._detect_disk_problems())
-
-        # 注册表问题检测
+        self.problems.extend(self._detect_security_problems(slow_results))
+        self.problems.extend(self._detect_disk_problems(slow_results))
         self.problems.extend(self._detect_registry_problems())
-
-        # 服务问题检测
         self.problems.extend(self._detect_service_problems())
-
-        # 启动项问题检测
         self.problems.extend(self._detect_startup_problems())
 
         # 生成解决方案
@@ -190,12 +196,14 @@ class SystemDiagnosis:
 
         return info
 
-    def _detect_system_problems(self) -> List[Problem]:
+    def _detect_system_problems(self, cached: dict = None) -> List[Problem]:
         """检测系统问题"""
+        if cached is None:
+            cached = {}
         problems = []
 
         # 检查系统文件完整性（None = 无法检查，不报错）
-        integrity = self._check_system_files_integrity()
+        integrity = cached.get("integrity")
         if integrity is False:
             problems.append(Problem(
                 id="sys_001",
@@ -207,7 +215,7 @@ class SystemDiagnosis:
             ))
 
         # 检查 Windows 更新（None = 无法检查，不报错）
-        pending = self._has_pending_updates()
+        pending = cached.get("updates")
         if pending is True:
             problems.append(Problem(
                 id="sys_002",
@@ -219,7 +227,7 @@ class SystemDiagnosis:
             ))
 
         # 检查系统还原点（None = 无法检查，不报错）
-        restore = self._has_restore_points()
+        restore = cached.get("restore")
         if restore is False:
             problems.append(Problem(
                 id="sys_003",
@@ -279,12 +287,14 @@ class SystemDiagnosis:
 
         return problems
 
-    def _detect_security_problems(self) -> List[Problem]:
+    def _detect_security_problems(self, cached: dict = None) -> List[Problem]:
         """检测安全问题"""
+        if cached is None:
+            cached = {}
         problems = []
 
         # 检查 Windows Defender 状态（None = 无法检查，不报错）
-        defender = self._is_defender_enabled()
+        defender = cached.get("defender")
         if defender is False:
             problems.append(Problem(
                 id="sec_001",
@@ -296,7 +306,7 @@ class SystemDiagnosis:
             ))
 
         # 检查防火墙状态（None = 无法检查，不报错）
-        fw = self._is_firewall_enabled()
+        fw = cached.get("firewall")
         if fw is False:
             problems.append(Problem(
                 id="sec_002",
@@ -320,7 +330,7 @@ class SystemDiagnosis:
 
         return problems
 
-    def _detect_disk_problems(self) -> List[Problem]:
+    def _detect_disk_problems(self, cached: dict = None) -> List[Problem]:
         """检测磁盘问题"""
         problems = []
 

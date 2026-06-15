@@ -1326,15 +1326,21 @@ class MainWindow(QMainWindow):
         self.scan_button.setEnabled(True)
         self.clean_button.setEnabled(True)
 
-        QMessageBox.information(
-            self,
-            "清理完成",
+        msg = (
             f"清理完成！\n\n"
             f"已删除: {result.deleted_files} 个文件\n"
             f"释放空间: {format_size(result.freed_size)}\n"
-            f"失败: {result.failed_files} 个文件\n\n"
-            f"文件已移到回收站，可以随时恢复。"
+            f"跳过: {result.skipped_files} 个文件\n"
+            f"失败: {result.failed_files} 个文件\n"
         )
+        if result.errors:
+            msg += f"\n失败原因（前5条）:\n"
+            for err in result.errors[:5]:
+                msg += f"  • {err}\n"
+        msg += "\n文件已移到回收站，可以随时恢复。"
+
+        icon = QMessageBox.Icon.Warning if result.failed_files > 0 else QMessageBox.Icon.Information
+        QMessageBox.information(self, "清理完成", msg)
 
         self.statusBar().showMessage("清理完成")
 
