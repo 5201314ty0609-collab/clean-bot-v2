@@ -35,6 +35,10 @@ from ui.threads import (
 # 导入对话系统
 from core.ai.dialog_system import DialogSystem, DialogContext, Mood
 
+# 导入更新检测
+from core.updater import check_for_update, CURRENT_VERSION
+from ui.update_dialog import show_update_dialog
+
 
 class MainWindow(QMainWindow):
     """主窗口"""
@@ -63,6 +67,9 @@ class MainWindow(QMainWindow):
 
         # 初始化定时器
         self._init_timers()
+
+        # 启动时静默检查更新（延迟3秒，避免阻塞窗口显示）
+        QTimer.singleShot(3000, self.check_update_on_startup)
 
         # Show greeting if robot is available
         if self.robot:
@@ -983,6 +990,44 @@ class MainWindow(QMainWindow):
 
         layout.addWidget(monitor_group)
 
+        # 更新设置
+        update_group = QGroupBox("软件更新")
+        update_layout = QVBoxLayout(update_group)
+
+        version_layout = QHBoxLayout()
+        version_label = QLabel(f"当前版本: v{CURRENT_VERSION}")
+        version_label.setFont(QFont("Microsoft YaHei", 11))
+        version_layout.addWidget(version_label)
+        version_layout.addStretch()
+        update_layout.addLayout(version_layout)
+
+        # 启动时检查更新
+        self.auto_update_checkbox = QCheckBox("启动时自动检查更新")
+        self.auto_update_checkbox.setChecked(True)
+        self.auto_update_checkbox.setFont(QFont("Microsoft YaHei", 11))
+        update_layout.addWidget(self.auto_update_checkbox)
+
+        # 检查更新按钮
+        self.update_btn = QPushButton("检查更新")
+        self.update_btn.setFont(QFont("Microsoft YaHei", 11))
+        self.update_btn.setStyleSheet("""
+            QPushButton {
+                background: #2563eb; color: white; border: none;
+                border-radius: 6px; padding: 10px 20px;
+            }
+            QPushButton:hover { background: #1d4ed8; }
+        """)
+        self.update_btn.clicked.connect(self._check_for_update)
+        update_layout.addWidget(self.update_btn)
+
+        # 状态标签
+        self.update_status_label = QLabel("")
+        self.update_status_label.setFont(QFont("Microsoft YaHei", 10))
+        self.update_status_label.setStyleSheet("color: #6b7280;")
+        update_layout.addWidget(self.update_status_label)
+
+        layout.addWidget(update_group)
+
         layout.addStretch()
 
         return page
@@ -1765,6 +1810,50 @@ class MainWindow(QMainWindow):
             context = DialogContext()
             greeting = self.dialog.greet(context)
             robot.show_speech(greeting)
+
+    def _check_for_update(self):
+        """检查更新（在后台线程中执行网络请求）。"""
+        self.update_btn.setEnabled(False)
+        self.update_btn.setText("检查中...")
+        self.update_status_label.setText("正在检查更新...")
+        self.update_status_label.setStyleSheet("color: #6b7280;")
+
+        from ui.threads import UpdateCheckThread
+        self._update_thread = UpdateCheckThread()
+        self._update_thread.finished.connect(self._on_update_check_done)
+        self._update_thread.start()
+
+    def _on_update_check_done(self, update_info):
+        """更新检查完成回调。"""
+        self.update_btn.setEnabled(True)
+        self.update_btn.setText("检查更新")
+
+        if update_info is None:
+            self.update_status_label.setText("检查失败，请检查网络连接")
+            self.update_status_label.setStyleSheet("color: #dc2626;")
+        elif not update_info.is_newer:
+            self.update_status_label.setText(
+                f"已是最新版本 (v{CURRENT_VERSION})"
+            )
+            self.update_status_label.setStyleSheet("color: #16a34a;")
+        else:
+            self.update_status_label.setText(
+                f"发现新版本 v{update_info.version}！"
+            )
+            self.update_status_label.setStyleSheet("color: #2563eb; font-weight: bold;")
+            show_update_dialog(update_info, self)
+
+    def check_update_on_startup(self):
+        """启动时静默检查更新（不显示"已是最新"的提示）。"""
+        from ui.threads import UpdateCheckThread
+        self._update_thread = UpdateCheckThread()
+        self._update_thread.finished.connect(self._on_startup_update_done)
+        self._update_thread.start()
+
+    def _on_startup_update_done(self, update_info):
+        """启动更新检查完成 — 只在有新版本时弹窗。"""
+        if update_info and update_info.is_newer:
+            show_update_dialog(update_info, self)
 
 
 def main():

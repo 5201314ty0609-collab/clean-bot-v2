@@ -1,0 +1,7 @@
+{
+  "version": "2.0.0",
+  "download_url": "https://github.com/YOUR_USERNAME/clean-bot-v2/releases/latest",
+  "release_notes": "首个正式版本\n\n功能:\n- 智能文件扫描 (SHA-256 去重)\n- 安全清理 (回收站模式)\n- 系统诊断 (注册表/服务/启动项)\n- 桌面机器人 (卡通形象交互)\n- 文件迁移 (符号链接保持路径)\n- 应用迁移 (保留注册表路径)\n- 磁盘实时监控\n- 智能推荐引擎",
+  "release_date": "2026-06-15",
+  "min_version": "2.0.0"
+}

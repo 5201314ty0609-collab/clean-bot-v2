@@ -91,3 +91,13 @@ class RecommendationThread(QThread):
         engine = RecommendationEngine()
         recommendations = engine.generate_recommendations()
         self.finished.emit(recommendations)
+
+
+class UpdateCheckThread(QThread):
+    """Background update checker — keeps network I/O off the UI thread."""
+    finished = pyqtSignal(object)  # emits UpdateInfo or None
+
+    def run(self):
+        from core.updater import check_for_update
+        info = check_for_update()
+        self.finished.emit(info)
