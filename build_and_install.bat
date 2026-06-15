@@ -32,6 +32,10 @@ if not exist "dist\CleanBot\CleanBot.exe" (
 )
 echo   [OK] EXE 构建完成
 
+:: ── 3.5 复制 setup.bat 到发布文件夹 ──
+copy /y setup.bat "dist\CleanBot\setup.bat" >nul 2>&1
+echo   [OK] setup.bat 已复制到发布文件夹
+
 :: ── 4. 桌面快捷方式 ──
 echo [4/4] 创建桌面快捷方式...
 
