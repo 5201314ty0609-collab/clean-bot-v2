@@ -1,27 +1,18 @@
 # CleanBot v2.0 依赖
-# 国内用户请使用以下命令安装：
-# pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+# 国内用户: pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
-# GUI
+# GUI 框架
 PyQt6>=6.5.0
-pyqtgraph>=0.13.0
 
 # 系统监控
 psutil>=5.9.0
 pywin32>=306
 
-# 文件操作
+# 安全删除 (移到回收站)
 send2trash>=1.8.0
 
-# 图像处理（用于生成机器人图片）
+# 图像处理 (机器人形象)
 Pillow>=10.0.0
 
-# 图表
-matplotlib>=3.7.0
-
-# 工具
-rich>=13.0.0
-click>=8.1.0
-
-# 打包（可选）
+# 打包工具 (仅开发时需要)
 # pyinstaller>=6.0.0

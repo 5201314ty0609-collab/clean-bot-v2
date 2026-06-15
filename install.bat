@@ -1,93 +1,94 @@
 @echo off
 chcp 65001 >nul
-setlocal enabledelayedexpansion
+title CleanBot v2.0 — 一键安装
 
 echo.
-echo ========================================
-echo   CleanBot v2.0 — 安装程序
-echo ========================================
+echo   ╔══════════════════════════════════════════╗
+echo   ║     CleanBot v2.0 — 智能桌面清理机器人   ║
+echo   ║           一键安装脚本                    ║
+echo   ╚══════════════════════════════════════════╝
 echo.
 
-:: 国内镜像源
-set PIP_INDEX_URL=https://pypi.tuna.tsinghua.edu.cn/simple
-set PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
-
-:: 检查 Python
+:: ── 检查 Python ──
 echo [1/3] 检查 Python...
 python --version >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo 错误: 未找到 Python
+    echo   未检测到 Python
+    echo   请先安装 Python 3.10+：
+    echo   https://www.python.org/downloads/
+    echo   安装时务必勾选 "Add Python to PATH"
     echo.
-    echo 请先安装 Python：
-    echo   1. 访问 https://www.python.org/downloads/
-    echo   2. 下载并安装 Python 3.9 或更高版本
-    echo   3. 安装时务必勾选 "Add Python to PATH"
-    echo.
+    start https://www.python.org/downloads/
     pause
     exit /b 1
 )
-
-echo    Python 已安装 ✓
-
-:: 安装依赖
-echo [2/3] 安装依赖...
-echo    这可能需要 1-3 分钟，请耐心等待...
+python --version
+echo    ✓ Python 就绪
 echo.
 
-pip install PyQt6 psutil Pillow -i %PIP_INDEX_URL% --trusted-host %PIP_TRUSTED_HOST% >nul 2>&1
+:: ── 安装依赖 ──
+echo [2/3] 安装依赖包（1-3 分钟）...
+set "OK=0"
 
-if errorlevel 1 (
-    echo    主镜像失败，尝试备用镜像...
-    pip install PyQt6 psutil Pillow -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com >nul 2>&1
+:: 清华镜像
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple --trusted-host pypi.tuna.tsinghua.edu.cn --quiet
+if not errorlevel 1 set "OK=1"
+
+:: 阿里云镜像
+if "%OK%"=="0" (
+    echo   清华源失败，尝试阿里云镜像...
+    pip install -r requirements.txt -i https://mirrors.aliyun.com/pypi/simple/ --trusted-host mirrors.aliyun.com --quiet
+    if not errorlevel 1 set "OK=1"
 )
 
-if errorlevel 1 (
+:: 默认源
+if "%OK%"=="0" (
+    echo   阿里云失败，尝试默认源...
+    pip install -r requirements.txt --quiet
+    if not errorlevel 1 set "OK=1"
+)
+
+if "%OK%"=="0" (
     echo.
-    echo 错误: 依赖安装失败
-    echo.
-    echo 请手动运行以下命令：
-    echo   pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple
-    echo.
+    echo   依赖安装失败，请手动运行：
+    echo   pip install -r requirements.txt
     pause
     exit /b 1
 )
-
-echo    依赖安装完成 ✓
-
-:: 创建桌面快捷方式
-echo [3/3] 创建桌面快捷方式...
-
-set "CURRENT_DIR=%~dp0"
-
-(
-echo Set oWS = WScript.CreateObject^("WScript.Shell"^)
-echo sLinkFile = oWS.SpecialFolders^("Desktop"^) ^& "\CleanBot v2.0.lnk"
-echo Set oLink = oWS.CreateShortcut^(sLinkFile^)
-echo oLink.TargetPath = "%CURRENT_DIR%start.bat"
-echo oLink.WorkingDirectory = "%CURRENT_DIR%"
-echo oLink.Description = "CleanBot v2.0 — 智能桌面清理机器人"
-echo oLink.Save
-) > "%TEMP%\create_shortcut.vbs"
-
-cscript //nologo "%TEMP%\create_shortcut.vbs" >nul 2>&1
-del "%TEMP%\create_shortcut.vbs" >nul 2>&1
-
-echo    快捷方式创建完成 ✓
-
+echo    ✓ 依赖安装完成
 echo.
-echo ========================================
-echo   安装完成！
-echo ========================================
+
+:: ── 创建快捷方式 ──
+echo [3/3] 创建启动方式...
+
+:: VBS 无窗口启动器
+set "VBS=%~dp0start_cleanbot.vbs"
+echo Set WshShell = CreateObject("WScript.Shell") > "%VBS%"
+echo WshShell.Run "pythonw ""%~dp0main.py""", 0, False >> "%VBS%"
+
+:: 桌面快捷方式
+powershell -Command ^
+    "$ws = New-Object -ComObject WScript.Shell; $s = $ws.CreateShortcut($ws.SpecialFolders('Desktop') + '\CleanBot.lnk'); $s.TargetPath = '%VBS%'; $s.WorkingDirectory = '%~dp0'; if (Test-Path '%~dp0resources\icons\cleanbot.ico') { $s.IconLocation = '%~dp0resources\icons\cleanbot.ico' }; $s.Save()" 2>nul
+
+:: start.bat 备用
+echo @echo off > "%~dp0start.bat"
+echo cd /d "%%~dp0" >> "%~dp0start.bat"
+echo echo CleanBot v2.0 — 启动中... >> "%~dp0start.bat"
+echo start "" pythonw main.py >> "%~dp0start.bat"
+
+echo    ✓ 桌面快捷方式已创建
 echo.
-echo   使用方法：
-echo     双击桌面的 "CleanBot v2.0" 图标即可启动
+echo   ╔══════════════════════════════════════════╗
+echo   ║            安装完成!                      ║
+echo   ║                                          ║
+echo   ║  桌面快捷方式: CleanBot                   ║
+echo   ║  备用启动: 双击 start.bat                 ║
+echo   ╚══════════════════════════════════════════╝
 echo.
-echo   功能介绍：
-echo     - 系统诊断：检测系统问题
-echo     - 文件扫描：清理垃圾文件
-echo     - 磁盘监控：实时监控磁盘
-echo     - 智能推荐：个性化清理建议
-echo.
-echo   按任意键退出安装程序...
-pause >nul
+choice /c YN /m "是否立即启动 CleanBot" /t 10 /d Y
+if errorlevel 2 goto :end
+start "" pythonw main.py
+echo    CleanBot 已启动!
+:end
+pause
