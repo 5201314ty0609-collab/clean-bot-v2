@@ -27,23 +27,23 @@ CURRENT_VERSION = "2.0.0"
 #   2. 自定义 JSON: 把 version.json 上传到任意可公网访问的位置
 #   3. GitHub (备用): 对开了代理的用户可用
 #
-# 链接中的 YOUR_GITEE_USER / YOUR_REPO 发布前需替换为实际值。
+# 链接中的 holyty / YOUR_REPO 发布前需替换为实际值。
 
 DEFAULT_UPDATE_URLS = [
     # Gitee Releases API（国内首选，无需代理）
-    "https://gitee.com/api/v5/repos/YOUR_GITEE_USER/clean-bot-v2/releases/latest",
+    "https://gitee.com/api/v5/repos/holyty/clean-bot-v2/releases/latest",
     # 自定义 version.json（托管在 Gitee Pages 或任意国内可访问的静态服务器）
-    "https://gitee.com/YOUR_GITEE_USER/clean-bot-v2/raw/main/version.json",
+    "https://gitee.com/holyty/clean-bot-v2/raw/main/version.json",
     # GitHub Releases API（海外/代理用户备用）
-    "https://api.github.com/repos/YOUR_USERNAME/clean-bot-v2/releases/latest",
+    "https://api.github.com/repos/holyty/clean-bot-v2/releases/latest",
     # GitHub raw（海外/代理用户备用）
-    "https://raw.githubusercontent.com/YOUR_USERNAME/clean-bot-v2/main/version.json",
+    "https://raw.githubusercontent.com/holyty/clean-bot-v2/main/version.json",
 ]
 
 # 下载页回退（当自动下载失败时，引导用户到这些页面手动下载）
 DEFAULT_DOWNLOAD_PAGES = [
-    "https://gitee.com/YOUR_GITEE_USER/clean-bot-v2/releases",
-    "https://github.com/YOUR_USERNAME/clean-bot-v2/releases",
+    "https://gitee.com/holyty/clean-bot-v2/releases",
+    "https://github.com/holyty/clean-bot-v2/releases",
 ]
 
 

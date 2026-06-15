@@ -1,15 +1,15 @@
 {
   "_comment": "CleanBot 更新源配置 — 直接修改此文件即可切换更新源，无需改代码",
-  "_instructions": "替换 YOUR_GITEE_USER 和 YOUR_USERNAME 为你的实际用户名",
+  "_instructions": "替换 holyty 和 holyty 为你的实际用户名",
 
   "update_urls": [
-    "https://gitee.com/api/v5/repos/YOUR_GITEE_USER/clean-bot-v2/releases/latest",
-    "https://gitee.com/YOUR_GITEE_USER/clean-bot-v2/raw/main/version.json",
-    "https://api.github.com/repos/YOUR_USERNAME/clean-bot-v2/releases/latest"
+    "https://gitee.com/api/v5/repos/holyty/clean-bot-v2/releases/latest",
+    "https://gitee.com/holyty/clean-bot-v2/raw/main/version.json",
+    "https://api.github.com/repos/holyty/clean-bot-v2/releases/latest"
   ],
 
   "download_pages": [
-    "https://gitee.com/YOUR_GITEE_USER/clean-bot-v2/releases",
-    "https://github.com/YOUR_USERNAME/clean-bot-v2/releases"
+    "https://gitee.com/holyty/clean-bot-v2/releases",
+    "https://github.com/holyty/clean-bot-v2/releases"
   ]
 }

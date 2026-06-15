@@ -138,8 +138,8 @@ build_installer.bat
 1. 打开应用 → 设置 → 软件更新 → 检查更新
 2. 如果提示"检查失败"，说明当前网络无法访问所有更新源
 3. 手动访问下载页获取最新版本：
-   - Gitee: https://gitee.com/YOUR_GITEE_USER/clean-bot-v2/releases
-   - GitHub: https://github.com/YOUR_USERNAME/clean-bot-v2/releases
+   - Gitee: https://gitee.com/holyty/clean-bot-v2/releases
+   - GitHub: https://github.com/holyty/clean-bot-v2/releases
 
 ### 自定义更新源
 编辑 `config/update_config.json` 可以切换到自己的更新服务器：
