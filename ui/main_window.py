@@ -48,17 +48,9 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("CleanBot v2.0 — 智能桌面清理机器人")
         self.setMinimumSize(1200, 800)
 
-        # 设置窗口图标（任务栏显示）
-        import sys as _sys, os as _os
-        _exe_dir = _os.path.dirname(_sys.executable) if getattr(_sys, 'frozen', False) else _os.path.dirname(__file__)
-        _icon_paths = [
-            _os.path.join(_exe_dir, '_internal', 'resources', 'icons', 'cleanbot.ico'),
-            _os.path.join(_exe_dir, 'resources', 'icons', 'cleanbot.ico'),
-        ]
-        for _p in _icon_paths:
-            if _os.path.exists(_p):
-                self.setWindowIcon(QIcon(_p))
-                break
+        # 任务栏/窗口图标（base64 内嵌，不依赖文件）
+        from core.icon import get_icon
+        self.setWindowIcon(get_icon())
 
         # 扫描结果
         self.scan_result = None
@@ -1798,14 +1790,9 @@ def main():
     app.setApplicationVersion("2.0.0")
     app.setOrganizationName("PHOENIX")
 
-    # 设置应用级图标（EXE 任务栏图标）
-    import os as _os2, sys as _sys2
-    _exe_dir2 = _os2.path.dirname(_sys2.executable) if getattr(_sys2, 'frozen', False) else _os2.path.dirname(__file__)
-    _icon = _os2.path.join(_exe_dir2, '_internal', 'resources', 'icons', 'cleanbot.ico')
-    if not _os2.path.exists(_icon):
-        _icon = _os2.path.join(_exe_dir2, 'resources', 'icons', 'cleanbot.ico')
-    if _os2.path.exists(_icon):
-        app.setWindowIcon(QIcon(_icon))
+    # 应用级图标（内嵌，无需文件）
+    from core.icon import get_icon
+    app.setWindowIcon(get_icon())
 
     # 启动时检查管理员权限
     from core.utils import is_admin, run_as_admin
