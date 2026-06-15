@@ -128,13 +128,10 @@ class FileScanner:
         # 预处理排除路径
         self._prepare_excluded_paths()
 
-        # 先扫快速路径（用户临时文件聚集地）
+        # 快速扫描：只扫垃圾聚集地（秒级完成）
         for quick_path in self._quick_paths:
             if os.path.exists(quick_path):
                 self._scan_directory(quick_path, 0, progress_callback)
-
-        # 再浅扫系统盘根目录
-        self._scan_directory(self.root_path, 0, progress_callback)
 
         # 分析结果
         self._analyze_results()
