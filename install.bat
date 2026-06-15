@@ -11,10 +11,12 @@ echo.
 echo   ╔══════════════════════════════════════════╗
 echo   ║   CleanBot v2.0 — 智能桌面清理机器人     ║
 echo   ║         一键安装脚本                      ║
+echo   ║                                          ║
+echo   ║  ⚠ 此脚本需要 Python 3.10+              ║
+echo   ║  电脑小白请用 EXE 安装包（免装 Python）   ║
 echo   ╚══════════════════════════════════════════╝
 echo.
 echo   安装目录: %INSTALL_DIR%
-echo.
 
 :: ── 1. 检查 Python ──
 echo [1/4] 检查 Python...

@@ -1,7 +1,7 @@
 # CleanBot v2.0 — 智能桌面清理机器人
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![Platform: Windows](https://img.shields.io/badge/platform-Windows-lightgrey.svg)](https://www.microsoft.com/windows)
 [![国内可用](https://img.shields.io/badge/国内可用-无需代理-green.svg)](MIRROR_CN.md)
 
@@ -52,27 +52,24 @@
 
 ## 🚀 快速开始
 
-### 方式 1：一键安装（推荐）
+### 🟢 电脑小白看这里 — 使用 EXE 安装包
+
+**不需要装 Python，不需要懂电脑！**
+
+1. 下载 `CleanBot-Setup.exe`
+2. 双击 → 下一步 → 安装
+3. 桌面出现图标 → 双击启动
+
+> 下载地址：https://gitee.com/holyty/clean-bot-v2/releases
+
+### 🔵 开发者看这里 — 源码安装
+
+**需要 Python 3.10+ 和 git。**
 
 ```bash
-# 1. 下载项目
-git clone https://github.com/5201314ty0609-collab/clean-bot-v2.git
-
-# 2. 进入目录
+git clone https://gitee.com/holyty/clean-bot-v2.git
 cd clean-bot-v2
-
-# 3. 双击 install.bat
-```
-
-安装完成后，桌面会出现 "CleanBot v2.0" 快捷方式，双击即可使用。
-
-### 方式 2：手动安装
-
-```bash
-# 1. 安装依赖
-pip install PyQt6 psutil Pillow -i https://pypi.tuna.tsinghua.edu.cn/simple
-
-# 2. 双击 start.bat 启动
+install.bat     # 双击运行，自动装依赖 + 创建快捷方式
 ```
 
 ---
