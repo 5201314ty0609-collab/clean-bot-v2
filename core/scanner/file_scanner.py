@@ -57,30 +57,31 @@ class ScanResult:
 
 
 class FileScanner:
-    """文件扫描器"""
+    """文件扫描器 — 快速模式优先扫垃圾聚集地"""
 
-    # 安全删除的文件扩展名
+    # 可直接删除的扩展名
     SAFE_EXTENSIONS = {
         ".tmp", ".temp", ".log", ".bak", ".old", ".backup",
-        ".cache", ".dmp", ".crash", ".etl", ".evtx",
-        ".thumbs.db", ".ds_store",
+        ".cache", ".dmp", ".crash", ".etl", ".evtx", ".mdmp",
+        ".hdmp", ".wer", ".chk", "._file", ".gid",
     }
 
-    # 文件分类通过 _is_temp_file / _is_cache_file / _is_log_file 方法实现
-    # 路径模式由 SmartAnalyzer 统一管理，避免硬编码
+    # 路径关键词（命中即判定为可清理）
+    CLEAN_PATH_KEYWORDS = [
+        "\\temp\\", "\\tmp\\", "\\cache\\", "\\cached\\",
+        "\\inetcache\\", "\\thumbcache\\", "\\prefetch\\",
+        "\\logs\\", "\\logfiles\\", "\\crashdumps\\",
+        "\\wer\\", "\\deliveryoptimization\\",
+        "\\softwaredistribution\\download\\",
+        "\\recent\\", "\\recycle", "$recycle.bin",
+    ]
 
-    # 绝对不扫描的路径
+    # 绝对不扫描
     EXCLUDE_PATHS = [
-        "C:\\Windows\\System32",
-        "C:\\Windows\\SysWOW64",
-        "C:\\Windows\\Boot",
-        "C:\\Windows\\Fonts",
-        "C:\\Windows\\WinSxS",
-        "C:\\Program Files",
-        "C:\\Program Files (x86)",
-        "C:\\$Recycle.Bin",
-        "C:\\System Volume Information",
-        "C:\\Recovery",
+        "C:\\Windows\\System32", "C:\\Windows\\SysWOW64",
+        "C:\\Windows\\Boot", "C:\\Windows\\Fonts", "C:\\Windows\\WinSxS",
+        "C:\\Program Files", "C:\\Program Files (x86)",
+        "C:\\System Volume Information", "C:\\Recovery",
     ]
 
     def __init__(self, root_path: str = None, max_depth: int = 6):
@@ -88,32 +89,32 @@ class FileScanner:
         self.root_path = root_path or get_system_drive()
         self.max_depth = max_depth
 
-        # 快速扫描路径（用户目录下的垃圾聚集地）
-        import os as _os
-        _profile = _os.environ.get('USERPROFILE', '')
+        # 垃圾聚集地（优先深度扫描）
+        _profile = os.environ.get('USERPROFILE', '')
+        _windir = os.environ.get('SystemRoot', 'C:\\Windows')
+        _local = os.path.join(_profile, 'AppData', 'Local')
         self._quick_paths = [
-            _os.path.join(_profile, 'AppData', 'Local', 'Temp'),
-            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Temp'),
-            _os.path.join(_profile, 'AppData', 'Local', 'Microsoft', 'Windows', 'INetCache'),
-            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Prefetch'),
-            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'Logs'),
-            _os.path.join(_os.environ.get('SystemRoot', 'C:\\Windows'), 'SoftwareDistribution', 'Download'),
+            os.path.join(_profile, 'AppData', 'Local', 'Temp'),
+            os.path.join(_windir, 'Temp'),
+            os.path.join(_local, 'Microsoft', 'Windows', 'INetCache'),
+            os.path.join(_local, 'Microsoft', 'Windows', 'Explorer'),
+            os.path.join(_local, 'Microsoft', 'Windows', 'WER'),
+            os.path.join(_local, 'Microsoft', 'Windows', 'Caches'),
+            os.path.join(_local, 'Google', 'Chrome', 'User Data', 'Default', 'Cache'),
+            os.path.join(_local, 'Google', 'Chrome', 'User Data', 'Default', 'Code Cache'),
+            os.path.join(_local, 'Microsoft', 'Edge', 'User Data', 'Default', 'Cache'),
+            os.path.join(_windir, 'Prefetch'),
+            os.path.join(_windir, 'Logs'),
+            os.path.join(_windir, 'SoftwareDistribution', 'Download'),
+            os.path.join(_windir, 'Temp'),
+            os.path.join(_windir, 'DeliveryOptimization'),
+            os.path.join(_profile, 'AppData', 'Local', 'CrashDumps'),
+            os.path.join(_profile, 'AppData', 'Roaming', 'Microsoft', 'Windows', 'Recent'),
         ]
         self.scan_result = ScanResult()
         self.scanned_files: List[FileInfo] = []
         self._excluded_paths: Set[str] = set()
         self._hash_cache: Dict[str, str] = {}
-        # Smart analyzer (singleton, lazy init)
-        self._analyzer = None
-
-    def _get_analyzer(self):
-        if self._analyzer is None:
-            try:
-                from core.analyzer.smart_analyzer import SmartAnalyzer
-                self._analyzer = SmartAnalyzer()
-            except ImportError:
-                pass
-        return self._analyzer
 
     def scan(self, progress_callback=None) -> ScanResult:
         """扫描文件系统"""
@@ -123,7 +124,6 @@ class FileScanner:
         self.scan_result = ScanResult()
         self.scanned_files = []
         self._hash_cache.clear()
-        self._analyzer = None  # Reset analyzer for fresh scan
 
         # 预处理排除路径
         self._prepare_excluded_paths()
@@ -245,117 +245,63 @@ class FileScanner:
             return None
 
     def _categorize_file(self, file_info: FileInfo):
-        """分类文件 (uses SmartAnalyzer when available)"""
-        # Try smart analyzer first
-        analyzer = self._get_analyzer()
-        if analyzer is not None:
-            analysis = analyzer.analyze_file(
-                path=file_info.path,
-                size=file_info.size,
-                extension=file_info.extension,
-                accessed=file_info.accessed,
-                modified=file_info.modified,
-                is_system=file_info.is_system,
-                is_hidden=file_info.is_hidden,
-            )
-            file_info.file_type = analysis.category
-            file_info.risk_level = analysis.risk.value
-            file_info.risk_reason = analysis.risk_reason
-            file_info.type_name = analyzer.get_type_name(file_info.extension)
-            file_info.impact = analysis.impact
-            file_info.clean_score = analysis.score
-
-            # Map analyzer output to legacy category
-            if analysis.can_delete and analysis.risk.value in ("safe", "low"):
-                file_info.category = "safe"
-            elif analysis.can_delete:
-                file_info.category = "ask"
-            elif analysis.risk.value in ("high", "critical"):
-                file_info.category = "skip"
-            else:
-                file_info.category = "ask"
-            return
-
-        # Fallback: legacy classification
+        """快速分类 — 路径匹配 > 扩展名 > 大文件 > 跳过"""
         path_lower = file_info.path.lower()
         ext = file_info.extension
 
-        if self._is_temp_file(file_info):
-            file_info.file_type = "temp"
-            file_info.category = "safe"
+        # 1. 路径关键词匹配（最快，命中率最高）
+        for kw in self.CLEAN_PATH_KEYWORDS:
+            if kw in path_lower:
+                if "\\temp\\" in kw or "\\tmp\\" in kw:
+                    file_info.file_type, file_info.category = "temp", "safe"
+                elif "cache" in kw or "thumbcache" in kw or "inetcache" in kw:
+                    file_info.file_type, file_info.category = "cache", "safe"
+                elif "log" in kw:
+                    file_info.file_type, file_info.category = "log", "safe"
+                elif "prefetch" in kw or "recent" in kw:
+                    file_info.file_type, file_info.category = "cache", "safe"
+                elif "wer" in kw or "crashdumps" in kw:
+                    file_info.file_type, file_info.category = "crash", "safe"
+                elif "softwaredistribution" in kw or "deliveryoptimization" in kw:
+                    file_info.file_type, file_info.category = "cache", "safe"
+                elif "recycle" in kw:
+                    file_info.file_type, file_info.category = "cache", "safe"
+                else:
+                    file_info.file_type, file_info.category = "temp", "safe"
+                return
 
-        elif self._is_cache_file(file_info):
-            file_info.file_type = "cache"
-            file_info.category = "safe"
-
-        elif self._is_log_file(file_info):
-            file_info.file_type = "log"
-            file_info.category = "safe"
-
-        elif ext in self.SAFE_EXTENSIONS:
+        # 2. 扩展名匹配
+        if ext in self.SAFE_EXTENSIONS:
             file_info.file_type = "safe_ext"
             file_info.category = "safe"
+            return
 
-        elif file_info.size > 100 * 1024 * 1024:
+        # 3. 系统文件跳过
+        if file_info.is_system:
+            file_info.file_type = "system"
+            file_info.category = "skip"
+            return
+
+        # 4. 大文件提示
+        if file_info.size > 100 * 1024 * 1024:
             file_info.file_type = "large"
             file_info.category = "ask"
+            return
 
-        elif self._is_old_file(file_info):
+        # 5. 旧文件提示
+        if self._is_old_file(file_info):
             file_info.file_type = "old"
             file_info.category = "ask"
+            return
 
-        else:
-            file_info.file_type = "unknown"
-            file_info.category = "skip"
-
-    def _is_temp_file(self, file_info: FileInfo) -> bool:
-        """检查是否是临时文件"""
-        path_lower = file_info.path.lower()
-        ext = file_info.extension
-
-        if ext in [".tmp", ".temp"]:
-            return True
-
-        temp_indicators = ["\\temp\\", "\\tmp\\", "\\windows\\temp\\"]
-        for indicator in temp_indicators:
-            if indicator in path_lower:
-                return True
-
-        return False
-
-    def _is_cache_file(self, file_info: FileInfo) -> bool:
-        """检查是否是缓存文件"""
-        path_lower = file_info.path.lower()
-        ext = file_info.extension
-
-        if ext in [".cache"]:
-            return True
-
-        cache_indicators = ["\\cache\\", "\\cached\\", "\\inetcache\\", "\\thumbcache"]
-        for indicator in cache_indicators:
-            if indicator in path_lower:
-                return True
-
-        return False
-
-    def _is_log_file(self, file_info: FileInfo) -> bool:
-        """检查是否是日志文件"""
-        ext = file_info.extension
-
-        if ext in [".log", ".etl", ".evtx", ".dmp", ".crash"]:
-            return True
-
-        return False
+        file_info.file_type = "unknown"
+        file_info.category = "skip"
 
     def _is_old_file(self, file_info: FileInfo) -> bool:
-        """检查是否是旧文件（>30天未访问）"""
-        now = time.time()
-        thirty_days = 30 * 24 * 60 * 60
-
-        if now - file_info.accessed > thirty_days:
-            return True
-
-        return False
+        """检查是否旧文件（>30天未访问且 >1MB）"""
+        if file_info.size < 1024 * 1024:
+            return False
+        return (time.time() - file_info.accessed) > 30 * 86400
 
     def _calculate_hash(self, file_path: str) -> str:
         """计算文件哈希 (SHA-256，避免 MD5 碰撞风险)"""
