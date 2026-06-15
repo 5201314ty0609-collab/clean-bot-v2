@@ -7,7 +7,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QFrame, QScrollArea, QProgressBar, QSizePolicy,
 )
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, QThread, QObject
 from PyQt6.QtGui import QFont
 
 from core.monitor.disk_monitor import DiskMonitor, format_size
@@ -323,7 +323,10 @@ CircularProgress = RingGauge
 
 
 class RecommendationsWidget(QWidget):
-    """推荐列表（供推荐页面使用）"""
+    """推荐列表 — 每条可一键清理"""
+
+    cleanup_requested = pyqtSignal(object)  # 发出推荐对象，由 main_window 处理
+
     def __init__(self):
         super().__init__()
         layout = QVBoxLayout(self)
@@ -337,20 +340,25 @@ class RecommendationsWidget(QWidget):
         self.scroll.setWidget(self.content)
         layout.addWidget(self.scroll)
         self._recs = []
+        self._completed = set()
 
     def update_recommendations(self, recs):
-        self._recs = recs
+        self._recs = [r for r in recs if r.id not in self._completed]
         while self.content_layout.count():
             w = self.content_layout.takeAt(0)
             if w.widget(): w.widget().deleteLater()
-        if not recs:
+        if not self._recs:
             empty = QLabel("暂无优化建议 ✨")
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             empty.setStyleSheet("color: #94a3b8; padding: 24px; font-size: 13px; border: none;")
             self.content_layout.addWidget(empty)
-        for r in recs[:8]:
+        for r in self._recs[:8]:
             self.content_layout.addWidget(self._make_card(r))
         self.content_layout.addStretch()
+
+    def mark_completed(self, rec_id: str):
+        self._completed.add(rec_id)
+        self.update_recommendations(self._recs)
 
     def _make_card(self, rec) -> QFrame:
         card = QFrame()
@@ -376,4 +384,14 @@ class RecommendationsWidget(QWidget):
             sv = QLabel(fmt(rec.estimated_savings))
             sv.setStyleSheet("color: #16a34a; font-size: 11px; font-weight: 600; border: none;")
             layout.addWidget(sv)
+        # 一键清理按钮
+        btn = QPushButton("一键清理")
+        btn.setFixedWidth(80)
+        btn.setStyleSheet("""
+            QPushButton { background: #2563eb; color: white; border: none; border-radius: 6px;
+                          padding: 8px 12px; font-size: 11px; font-weight: 600; }
+            QPushButton:hover { background: #1d4ed8; }
+        """)
+        btn.clicked.connect(lambda: self.cleanup_requested.emit(rec))
+        layout.addWidget(btn)
         return card

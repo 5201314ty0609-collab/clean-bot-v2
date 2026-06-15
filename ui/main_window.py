@@ -474,6 +474,7 @@ class MainWindow(QMainWindow):
 
         # 推荐列表
         self.recommendations_widget = RecommendationsWidget()
+        self.recommendations_widget.cleanup_requested.connect(self._on_rec_cleanup)
         layout.addWidget(self.recommendations_widget)
 
         return page
@@ -1293,6 +1294,18 @@ class MainWindow(QMainWindow):
         """推荐生成完成"""
         self.recommendations_widget.update_recommendations(recommendations)
         self.statusBar().showMessage(f"已生成 {len(recommendations)} 个推荐")
+
+    def _on_rec_cleanup(self, rec):
+        """点击推荐卡片的一键清理"""
+        self.statusBar().showMessage(f"正在执行: {rec.title}...")
+
+        # 切换到扫描页面开始扫描
+        self._switch_page(1)  # 文件扫描页
+        self._start_scan()
+
+        # 标记该推荐已完成
+        self.recommendations_widget.mark_completed(rec.id)
+        self.statusBar().showMessage(f"已完成: {rec.title}，正在扫描可清理文件...")
 
     def _toggle_monitor(self):
         """切换监控状态"""
